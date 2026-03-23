@@ -1,0 +1,1 @@
+export type StationSortType = 'distance' | 'gasolinePrice' | 'dieselPrice'
