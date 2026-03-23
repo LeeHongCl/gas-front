@@ -1,4 +1,4 @@
-type GasStation = {
+export type GasStation = {
   id: string
   name: string
   brand: string
@@ -11,4 +11,9 @@ type GasStation = {
   isSelf: boolean
   hasCarWash: boolean
   hasStore: boolean
+}
+
+export type CurrentPosition = {
+  lat: number
+  lng: number
 }
