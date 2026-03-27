@@ -1,27 +1,30 @@
 <template>
-  <div class="card" :class="{ selected: selected }" @click="handleClick">
-    <div class="header">
-      <h3>{{ station.name }}</h3>
-      <span class="brand">{{ station.brand }}</span>
+  <article class="card" @click="$emit('select', station)">
+    <div class="card-top">
+      <div>
+        <h3 class="title">{{ station.name }}</h3>
+        <p class="meta">{{ station.brand }} · {{ station.address }}</p>
+      </div>
+      <div class="distance">{{ formatDistance(station.distance) }}</div>
     </div>
 
-    <div class="meta" v-if="distanceText || durationText">
-      <span v-if="distanceText">{{ distanceText }}</span>
-      <span v-if="durationText">{{ durationText }}</span>
+    <div class="price-row">
+      <div class="price-box">
+        <span class="label">휘발유</span>
+        <strong>{{ station.gasolinePrice.toLocaleString() }}원</strong>
+      </div>
+      <div class="price-box">
+        <span class="label">경유</span>
+        <strong>{{ station.dieselPrice.toLocaleString() }}원</strong>
+      </div>
     </div>
 
-    <div class="info">
-      <p>{{ station.address }}</p>
-      <p>휘발유: {{ station.gasolinePrice }}원</p>
-      <p>경유: {{ station.dieselPrice }}원</p>
+    <div class="tag-row">
+      <span v-if="station.isSelf" class="tag">셀프</span>
+      <span v-if="station.hasCarWash" class="tag">세차</span>
+      <span v-if="station.hasStore" class="tag">편의점</span>
     </div>
-
-    <div class="tags">
-      <span v-if="station.isSelf">셀프</span>
-      <span v-if="station.hasCarWash">세차</span>
-      <span v-if="station.hasStore">편의점</span>
-    </div>
-  </div>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -29,86 +32,86 @@ import type { GasStation } from '@/types/gasStation'
 
 defineProps<{
   station: GasStation
-  selected?: boolean
-  distanceText?: string
-  durationText?: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'select'): void
+defineEmits<{
+  (e: 'select', station: GasStation): void
 }>()
 
-function handleClick() {
-  emit('select')
+function formatDistance(distance?: number) {
+  if (distance == null) return '-'
+  if (distance < 1) return `${Math.round(distance * 1000)}m`
+  return `${distance.toFixed(1)}km`
 }
 </script>
 
 <style scoped>
 .card {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: background-color 0.2s, border-left 0.2s;
+  background: white;
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
 }
 
-.card:hover {
-  background-color: #f9fafb;
-}
-
-.card.selected {
-  background-color: #eef6ff;
-  border-left: 4px solid #3b82f6;
-}
-
-.header {
+.card-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  font-size: 14px;
+  gap: 12px;
 }
 
-.header h3 {
+.title {
   margin: 0;
-  font-size: 15px;
-}
-
-.brand {
-  font-size: 12px;
-  color: gray;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .meta {
-  margin-top: 8px;
-  display: flex;
-  gap: 6px;
-}
-
-.meta span {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background-color: #dbeafe;
-  color: #1d4ed8;
-}
-
-.info {
+  margin: 6px 0 0;
+  color: #6b7280;
   font-size: 13px;
-  margin-top: 8px;
 }
 
-.info p {
-  margin: 4px 0;
+.distance {
+  white-space: nowrap;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.tags {
-  margin-top: 6px;
+.price-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.price-box {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.tag-row {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
 }
 
-.tags span {
-  font-size: 11px;
-  background: #e5e7eb;
-  padding: 2px 6px;
-  border-radius: 4px;
+.tag {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
 }
 </style>

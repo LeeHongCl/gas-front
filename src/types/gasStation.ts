@@ -1,4 +1,4 @@
-export type GasStation = {
+export interface GasStation {
   id: string
   name: string
   brand: string
@@ -11,9 +11,17 @@ export type GasStation = {
   isSelf: boolean
   hasCarWash: boolean
   hasStore: boolean
+  distance?: number
+  favorite?: boolean
 }
 
-export type CurrentPosition = {
-  lat: number
-  lng: number
+export type FuelType = 'gasoline' | 'diesel'
+
+export interface StationFilterState {
+  fuelType: FuelType
+  sortBy: 'distance' | 'price' | 'recommend'
+  onlySelf: boolean
+  hasCarWash: boolean
+  hasStore: boolean
+  radiusKm: number
 }

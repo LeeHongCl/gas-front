@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GasStationApp</string>
+    <string name="title_activity_main">GasStationApp</string>
+    <string name="package_name">com.example.gasstation</string>
+    <string name="custom_url_scheme">com.example.gasstation</string>
+</resources>
