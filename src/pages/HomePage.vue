@@ -1,21 +1,28 @@
 <template>
   <div class="page">
     <div class="map-area">
+      <!-- 지도 레이어 -->
+      <div class="map-canvas">
+        <KakaoMapView
+          :stations="displayStations"
+          :selected-station="selectedStation"
+          :center="mapCenter"
+          @select-station="handleSelectStation"
+        />
+      </div>
+
+      <!-- 상단 검색 -->
       <SearchBar v-model="keyword" @open-filter="isFilterOpen = true" />
 
-      <KakaoMapView
-        :stations="displayStations"
-        :selected-station="selectedStation"
-        :center="mapCenter"
-        @select-station="handleSelectStation"
-      />
-
+      <!-- 현재 위치 칩 -->
       <div class="map-chip">
         현재 위치: {{ mapCenter.lat.toFixed(4) }}, {{ mapCenter.lng.toFixed(4) }}
       </div>
 
+      <!-- 플로팅 버튼 -->
       <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
 
+      <!-- 바텀시트 -->
       <StationBottomSheet
         :stations="displayStations"
         :expanded="sheetExpanded"
@@ -24,6 +31,7 @@
       />
     </div>
 
+    <!-- 필터 바텀시트 -->
     <FilterBottomSheet
       :open="isFilterOpen"
       :state="filterState"
@@ -31,7 +39,11 @@
       @apply="handleApplyFilter"
     />
 
-    <StationDetailSheet :station="selectedStation" @close="selectedStation = null" />
+    <!-- 상세 시트 -->
+    <StationDetailSheet
+      :station="selectedStation"
+      @close="selectedStation = null"
+    />
   </div>
 </template>
 
@@ -52,7 +64,7 @@ const store = useNearbyStore()
 
 const keyword = ref('')
 const isFilterOpen = ref(false)
-const sheetExpanded = ref(false)
+const sheetExpanded = ref(true)
 const selectedStation = ref<GasStation | null>(null)
 
 const mapCenter = ref({
@@ -119,21 +131,37 @@ const filteredStations = computed(() => {
     const matchesStore = !filterState.value.hasStore || station.hasStore
     const matchesRadius = (station.distance ?? 999) <= filterState.value.radiusKm
 
-    return matchesKeyword && matchesSelf && matchesCarWash && matchesStore && matchesRadius
+    return (
+      matchesKeyword &&
+      matchesSelf &&
+      matchesCarWash &&
+      matchesStore &&
+      matchesRadius
+    )
   })
 
   if (filterState.value.sortBy === 'distance') {
-    result = [...result].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999))
+    result = [...result].sort(
+      (a, b) => (a.distance ?? 999) - (b.distance ?? 999),
+    )
   } else if (filterState.value.sortBy === 'price') {
     result = [...result].sort((a, b) => {
-      const aPrice = filterState.value.fuelType === 'gasoline' ? a.gasolinePrice : a.dieselPrice
-      const bPrice = filterState.value.fuelType === 'gasoline' ? b.gasolinePrice : b.dieselPrice
+      const aPrice =
+        filterState.value.fuelType === 'gasoline'
+          ? a.gasolinePrice
+          : a.dieselPrice
+      const bPrice =
+        filterState.value.fuelType === 'gasoline'
+          ? b.gasolinePrice
+          : b.dieselPrice
       return aPrice - bPrice
     })
   } else {
     result = [...result].sort((a, b) => {
-      const aScore = (a.favorite ? 2 : 0) + (a.isSelf ? 1 : 0) - (a.distance ?? 0)
-      const bScore = (b.favorite ? 2 : 0) + (b.isSelf ? 1 : 0) - (b.distance ?? 0)
+      const aScore =
+        (a.favorite ? 2 : 0) + (a.isSelf ? 1 : 0) - (a.distance ?? 0)
+      const bScore =
+        (b.favorite ? 2 : 0) + (b.isSelf ? 1 : 0) - (b.distance ?? 0)
       return bScore - aScore
     })
   }
@@ -214,9 +242,15 @@ onMounted(() => {
 
 .map-area {
   position: relative;
-  min-height: calc(100dvh - 82px);
+  height: calc(100dvh - 82px);
   overflow: hidden;
   background: #dbeafe;
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .map-chip {

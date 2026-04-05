@@ -47,8 +47,8 @@ defineEmits<{
   right: 0;
   bottom: 0;
   z-index: 45;
-  min-height: 220px;
-  max-height: 42dvh;
+  min-height: 280px;
+  max-height: 55dvh;
   padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
@@ -58,7 +58,7 @@ defineEmits<{
 }
 
 .sheet.expanded {
-  max-height: 70dvh;
+  max-height: 78dvh;
 }
 
 .handle-wrap {
@@ -105,7 +105,7 @@ defineEmits<{
   gap: 12px;
   margin-top: 14px;
   overflow-y: auto;
-  max-height: calc(70dvh - 100px);
+  max-height: calc(78dvh - 110px);
   padding-bottom: 8px;
 }
 </style>
