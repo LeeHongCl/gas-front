@@ -100,7 +100,7 @@ export const useNearbyStore = defineStore('nearby', () => {
         fuelType: 'GASOLINE',
         refuelLiters: 40,
         fuelEfficiency: 12,
-        limit: 3,
+        limit: 6,
       })
 
       stations.value = mapRouteRecommendationsToGasStations(response)
@@ -132,12 +132,12 @@ export const useNearbyStore = defineStore('nearby', () => {
       const response = await fetchRouteRecommendations({
         originLatitude: mapCenter.value.lat,
         originLongitude: mapCenter.value.lng,
-        destinationLatitude: 36.1450,
-        destinationLongitude: 128.3936,
+        destinationLatitude: 35.8714,
+        destinationLongitude: 128.6014,
         fuelType: 'GASOLINE',
         refuelLiters: 40,
         fuelEfficiency: 12,
-        limit: 3,
+        limit: 5,
       })
 
       stations.value = mapRouteRecommendationsToGasStations(response)
