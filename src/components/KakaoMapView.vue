@@ -52,7 +52,7 @@ function loadKakaoMapScript(): Promise<void> {
     }
 
     const script = document.createElement('script')
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false`
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=d8d3668f7759340c2f4dcb70c0f701bd&autoload=false`
     script.async = true
     script.dataset.kakaoMap = 'true'
 
@@ -62,7 +62,6 @@ function loadKakaoMapScript(): Promise<void> {
 
     script.onerror = () => reject(new Error('카카오맵 스크립트 로드 실패'))
     document.head.appendChild(script)
-    console.log(import.meta.env)
   })
 }
 

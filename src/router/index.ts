@@ -9,6 +9,8 @@ import NearbyPage from '@/pages/NearbyPage.vue'
 import FavoritesPage from '@/pages/FavoritesPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import MyInfoPage from '@/pages/MyInfoPage.vue'
+import RouteRecommendationPage from '@/pages/RouteRecommendationPage.vue'
+
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -24,6 +26,7 @@ const router = createRouter({
       component: InitialProfilePage,
       meta: { requiresAuth: true },
     },
+
     {
       path: '/app',
       component: AppLayout,
@@ -31,6 +34,11 @@ const router = createRouter({
       children: [
         { path: '', name: 'home', component: HomePage },
         { path: 'nearby', name: 'nearby', component: NearbyPage },
+        {
+          path: 'route-recommendation',
+          name: 'route-recommendation',
+          component: RouteRecommendationPage,
+        },
         { path: 'favorites', name: 'favorites', component: FavoritesPage },
         { path: 'settings', name: 'settings', component: SettingsPage },
         { path: 'my-info', name: 'my-info', component: MyInfoPage },
