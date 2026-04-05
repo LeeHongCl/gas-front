@@ -1,18 +1,24 @@
 <template>
   <div class="nearby-page">
     <header class="page-header">
-      <h1>주변 주유소</h1>
-      <p>버튼을 누르면 추천 주유소를 불러옵니다.</p>
+      <h1>주변 주유소 테스트</h1>
+      <p>반경 / 경로 추천을 각각 테스트할 수 있습니다.</p>
     </header>
 
+    <!-- 🔥 버튼 2개 -->
     <section class="action-section">
-      <button class="load-btn" :disabled="loading" @click="loadStations">
-        {{ loading ? '불러오는 중...' : '추천 주유소 불러오기' }}
+      <button class="load-btn" :disabled="loading" @click="loadRadiusStations">
+        반경 추천
+      </button>
+
+      <button class="load-btn route" :disabled="loading" @click="loadRouteStations">
+        경로 추천
       </button>
     </section>
 
     <p v-if="error" class="error-text">{{ error }}</p>
 
+    <!-- 지도 -->
     <section class="map-section">
       <KakaoMapView
         :stations="stations"
@@ -22,6 +28,7 @@
       />
     </section>
 
+    <!-- 리스트 -->
     <section v-if="!loading && stations.length === 0" class="empty-section">
       아직 조회된 주유소가 없습니다.
     </section>
@@ -43,70 +50,101 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import KakaoMapView from '@/components/KakaoMapView.vue';
-import StationCard from '@/components/StationCard.vue';
-import StationDetailSheet from '@/components/StationDetailSheet.vue';
-import type { GasStation } from '@/types/gasStation';
-import { fetchRouteRecommendations } from '@/api/gasStationApi';
-import { mapRouteRecommendationsToGasStations } from '@/utils/mapRouteRecommendationsToGasStations';
+import { ref } from 'vue'
+import KakaoMapView from '@/components/KakaoMapView.vue'
+import StationCard from '@/components/StationCard.vue'
+import StationDetailSheet from '@/components/StationDetailSheet.vue'
+import type { GasStation } from '@/types/gasStation'
 
-const stations = ref<GasStation[]>([]);
-const selectedStation = ref<GasStation | null>(null);
-const loading = ref(false);
-const error = ref('');
+import {
+  fetchRadiusRecommendations,
+  fetchRouteRecommendations,
+} from '@/api/gasStationApi'
+
+import { mapRouteRecommendationsToGasStations } from '@/utils/mapRouteRecommendationsToGasStations'
+
+const stations = ref<GasStation[]>([])
+const selectedStation = ref<GasStation | null>(null)
+const loading = ref(false)
+const error = ref('')
 
 const mapCenter = ref({
   lat: 35.8691,
   lng: 128.5945,
-});
+})
 
 function selectStation(station: GasStation) {
-  selectedStation.value = station;
+  selectedStation.value = station
   mapCenter.value = {
     lat: station.lat,
     lng: station.lng,
-  };
+  }
 }
 
-async function loadStations() {
-  console.log('loadStations 실행됨');
+//
+// 🔥 반경 추천
+//
+async function loadRadiusStations() {
+  console.log('반경 추천 실행')
 
   try {
-    loading.value = true;
-    error.value = '';
-    selectedStation.value = null;
+    loading.value = true
+    error.value = ''
+    selectedStation.value = null
+
+    const response = await fetchRadiusRecommendations({
+      latitude: mapCenter.value.lat,
+      longitude: mapCenter.value.lng,
+      radius: 3000,
+      fuelType: 'GASOLINE',
+      refuelLiters: 40,
+      fuelEfficiency: 12,
+      limit: 3,
+    })
+
+    stations.value = mapRouteRecommendationsToGasStations(response)
+
+    console.log('반경 결과:', stations.value)
+  } catch (err) {
+    console.error(err)
+    error.value = '반경 추천 실패'
+    stations.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+//
+// 🔥 경로 추천
+//
+async function loadRouteStations() {
+  console.log('경로 추천 실행')
+
+  try {
+    loading.value = true
+    error.value = ''
+    selectedStation.value = null
 
     const response = await fetchRouteRecommendations({
-      originLatitude: 35.8714,
-      originLongitude: 128.6014,
-      destinationLatitude: 35.1796,
+      originLatitude: mapCenter.value.lat,
+      originLongitude: mapCenter.value.lng,
+      destinationLatitude: 35.1796, // 부산 (테스트용)
       destinationLongitude: 129.0756,
       fuelType: 'GASOLINE',
       refuelLiters: 40,
       fuelEfficiency: 12,
       limit: 3,
-    });
+    })
 
-    stations.value = mapRouteRecommendationsToGasStations(response);
-    console.log('변환된 stations:', stations.value);
+    stations.value = mapRouteRecommendationsToGasStations(response)
 
-    const firstStation = stations.value[0];
-    if (firstStation) {
-      mapCenter.value = {
-        lat: firstStation.lat,
-        lng: firstStation.lng,
-      };
-    }
+    console.log('경로 결과:', stations.value)
   } catch (err) {
-    console.error('loadStations 에러:', err);
-    error.value =
-      err instanceof Error
-        ? err.message
-        : '주유소 데이터를 불러오지 못했습니다.';
-    stations.value = [];
+    console.error(err)
+    error.value = '경로 추천 실패'
+    stations.value = []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>
@@ -122,17 +160,19 @@ async function loadStations() {
 }
 
 .page-header p {
-  margin: 8px 0 0;
+  margin-top: 6px;
   color: #6b7280;
 }
 
 .action-section {
+  display: flex;
+  gap: 10px;
   margin-top: 16px;
 }
 
 .load-btn {
+  flex: 1;
   height: 44px;
-  padding: 0 16px;
   border: none;
   border-radius: 10px;
   background: #111827;
@@ -141,38 +181,35 @@ async function loadStations() {
   cursor: pointer;
 }
 
-.load-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.load-btn.route {
+  background: #2563eb;
 }
 
-.error-text {
-  margin-top: 12px;
-  color: #dc2626;
+.load-btn:disabled {
+  opacity: 0.6;
 }
 
 .map-section {
-  position: relative;
-  width: 100%;
   height: 320px;
   margin-top: 18px;
   border-radius: 18px;
   overflow: hidden;
-  background: #f3f4f6;
-}
-
-.empty-section {
-  margin-top: 18px;
-  padding: 20px;
-  border-radius: 14px;
-  background: #f9fafb;
-  color: #6b7280;
-  text-align: center;
 }
 
 .card-list {
   display: grid;
   gap: 14px;
   margin-top: 18px;
+}
+
+.empty-section {
+  margin-top: 18px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.error-text {
+  margin-top: 10px;
+  color: red;
 }
 </style>

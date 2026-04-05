@@ -27,3 +27,13 @@ export interface RouteRecommendationItem {
   frontRoadSpeed: number;
   detourDistance: number;
 }
+
+export interface RadiusRecommendationRequest {
+  latitude: number;
+  longitude: number;
+  radius: number;
+  fuelType: FuelType;
+  refuelLiters: number;
+  fuelEfficiency: number;
+  limit: number;
+}
