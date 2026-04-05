@@ -29,22 +29,26 @@ export async function fetchRouteRecommendations(
     limit: String(safeLimit),
   });
 
-  const response = await fetch(
-    `${BASE_URL}/api/gas-stations/recommendations/route?${searchParams.toString()}`,
-    {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
+  const url = `${BASE_URL}/api/gas-stations/recommendations/route?${searchParams.toString()}`;
+  console.log('request url:', url);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
     },
-  );
+  });
+
+  console.log('response status:', response.status, response.statusText);
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
+    console.error('response error body:', errorText);
     throw new Error(`경로 기반 추천 조회 실패: ${response.status} ${errorText}`);
   }
 
   const data = (await response.json()) as RouteRecommendationItem[];
+  console.log('response data:', data);
 
   if (!Array.isArray(data)) {
     throw new Error('예상한 응답 형식이 아닙니다.');
