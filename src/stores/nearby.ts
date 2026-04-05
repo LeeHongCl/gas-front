@@ -124,7 +124,7 @@ export const useNearbyStore = defineStore('nearby', () => {
   }
 
   async function loadRouteStations() {
-  console.log('경로 추천 실행')
+  console.log('경로 추천 실행 시작')
 
   try {
     loading.value = true
@@ -142,14 +142,29 @@ export const useNearbyStore = defineStore('nearby', () => {
       limit: 3,
     })
 
+    console.log('경로추천 원본 응답:', response)
+
     stations.value = mapRouteRecommendationsToGasStations(response)
 
+    console.log('변환 후 stations:', stations.value)
+
+    lastSource.value = 'route'
+
+    const firstStation = stations.value[0]
+    if (firstStation) {
+      mapCenter.value = {
+        lat: firstStation.lat,
+        lng: firstStation.lng,
+      }
+    }
   } catch (err) {
-    console.error(err)
-    error.value = '경로 추천 실패'
+    console.error('경로 추천 실패:', err)
+    error.value =
+      err instanceof Error ? err.message : '경로 추천 실패'
     stations.value = []
   } finally {
     loading.value = false
+    console.log('경로 추천 종료')
   }
 }
 
