@@ -129,6 +129,12 @@ async function initMap() {
 
   renderCurrentLocationMarker()
   renderStationMarkers()
+  setTimeout(() => {
+  map.relayout()
+  map.setCenter(
+    new window.kakao.maps.LatLng(props.center.lat, props.center.lng)
+  )
+}, 0)
 }
 
 onMounted(async () => {
