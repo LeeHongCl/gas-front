@@ -190,12 +190,14 @@ async function loadRouteStations() {
 }
 
 .map-section {
+  position: relative;
+  width: 100%;
   height: 320px;
   margin-top: 18px;
   border-radius: 18px;
   overflow: hidden;
+  background: #f3f4f6;
 }
-
 .card-list {
   display: grid;
   gap: 14px;
