@@ -4,10 +4,10 @@
       <SearchBar v-model="keyword" @open-filter="isFilterOpen = true" />
 
       <KakaoMapView
-        :stations="filteredStations"
+        :stations="displayStations"
         :selected-station="selectedStation"
         :center="mapCenter"
-        @select-station="selectedStation = $event"
+        @select-station="handleSelectStation"
       />
 
       <div class="map-chip">
@@ -17,10 +17,10 @@
       <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
 
       <StationBottomSheet
-        :stations="filteredStations"
+        :stations="displayStations"
         :expanded="sheetExpanded"
         @toggle-expand="sheetExpanded = !sheetExpanded"
-        @select-station="selectedStation = $event"
+        @select-station="handleSelectStation"
       />
     </div>
 
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import FloatingButtons from '@/components/FloatingButtons.vue'
 import StationBottomSheet from '@/components/StationBottomSheet.vue'
@@ -46,6 +46,9 @@ import KakaoMapView from '@/components/KakaoMapView.vue'
 import { gasStations } from '@/data/gasStations'
 import { getAppCurrentLocation } from '@/utils/location'
 import type { GasStation, StationFilterState } from '@/types/gasStation'
+import { useNearbyStore } from '@/stores/nearby'
+
+const store = useNearbyStore()
 
 const keyword = ref('')
 const isFilterOpen = ref(false)
@@ -138,6 +141,13 @@ const filteredStations = computed(() => {
   return result
 })
 
+const displayStations = computed(() => {
+  if (store.lastSource !== 'none' && store.stations.length > 0) {
+    return store.stations
+  }
+  return filteredStations.value
+})
+
 function handleApplyFilter(nextState: StationFilterState) {
   filterState.value = nextState
   isFilterOpen.value = false
@@ -165,6 +175,32 @@ function handleRecenter() {
 function handleResearch() {
   console.log('현재 지도 중심 기준으로 재검색')
 }
+
+function handleSelectStation(station: GasStation) {
+  selectedStation.value = station
+}
+
+watch(
+  () => store.selectedStation,
+  (nextStation) => {
+    if (nextStation) {
+      selectedStation.value = nextStation
+    }
+  },
+)
+
+watch(
+  () => store.mapCenter,
+  (nextCenter) => {
+    if (store.lastSource !== 'none') {
+      mapCenter.value = {
+        lat: nextCenter.lat,
+        lng: nextCenter.lng,
+      }
+    }
+  },
+  { deep: true },
+)
 
 onMounted(() => {
   updateCurrentLocation()

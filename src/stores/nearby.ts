@@ -9,6 +9,8 @@ import { mapRouteRecommendationsToGasStations } from '@/utils/mapRouteRecommenda
 
 const STORAGE_KEY = 'nearby-store'
 
+type NearbySourceType = 'none' | 'radius' | 'route'
+
 interface NearbyPersistedState {
   stations: GasStation[]
   selectedStation: GasStation | null
@@ -17,6 +19,7 @@ interface NearbyPersistedState {
     lng: number
   }
   error: string
+  lastSource: NearbySourceType
 }
 
 function loadPersistedState(): NearbyPersistedState | null {
@@ -45,6 +48,8 @@ export const useNearbyStore = defineStore('nearby', () => {
   const selectedStation = ref<GasStation | null>(persisted?.selectedStation ?? null)
   const loading = ref(false)
   const error = ref(persisted?.error ?? '')
+  const lastSource = ref<NearbySourceType>(persisted?.lastSource ?? 'none')
+
   const mapCenter = ref(
     persisted?.mapCenter ?? {
       lat: 35.8691,
@@ -58,16 +63,13 @@ export const useNearbyStore = defineStore('nearby', () => {
       selectedStation: selectedStation.value,
       mapCenter: mapCenter.value,
       error: error.value,
+      lastSource: lastSource.value,
     })
   }
 
-  watch(
-    [stations, selectedStation, mapCenter, error],
-    () => {
-      persist()
-    },
-    { deep: true },
-  )
+  watch([stations, selectedStation, mapCenter, error, lastSource], persist, {
+    deep: true,
+  })
 
   function selectStation(station: GasStation) {
     selectedStation.value = station
@@ -81,6 +83,7 @@ export const useNearbyStore = defineStore('nearby', () => {
     stations.value = []
     selectedStation.value = null
     error.value = ''
+    lastSource.value = 'none'
     persist()
   }
 
@@ -101,6 +104,7 @@ export const useNearbyStore = defineStore('nearby', () => {
       })
 
       stations.value = mapRouteRecommendationsToGasStations(response)
+      lastSource.value = 'radius'
 
       const firstStation = stations.value[0]
       if (firstStation) {
@@ -113,6 +117,7 @@ export const useNearbyStore = defineStore('nearby', () => {
       console.error(err)
       error.value = err instanceof Error ? err.message : '반경 추천 실패'
       stations.value = []
+      lastSource.value = 'none'
     } finally {
       loading.value = false
     }
@@ -136,6 +141,7 @@ export const useNearbyStore = defineStore('nearby', () => {
       })
 
       stations.value = mapRouteRecommendationsToGasStations(response)
+      lastSource.value = 'route'
 
       const firstStation = stations.value[0]
       if (firstStation) {
@@ -148,6 +154,7 @@ export const useNearbyStore = defineStore('nearby', () => {
       console.error(err)
       error.value = err instanceof Error ? err.message : '경로 추천 실패'
       stations.value = []
+      lastSource.value = 'none'
     } finally {
       loading.value = false
     }
@@ -159,6 +166,7 @@ export const useNearbyStore = defineStore('nearby', () => {
     loading,
     error,
     mapCenter,
+    lastSource,
     selectStation,
     clearStations,
     loadRadiusStations,
