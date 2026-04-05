@@ -124,49 +124,41 @@ export const useNearbyStore = defineStore('nearby', () => {
   }
 
   async function loadRouteStations() {
-  console.log('경로 추천 실행 시작')
+    try {
+      loading.value = true
+      error.value = ''
+      selectedStation.value = null
 
-  try {
-    loading.value = true
-    error.value = ''
-    selectedStation.value = null
+      const response = await fetchRouteRecommendations({
+        originLatitude: mapCenter.value.lat,
+        originLongitude: mapCenter.value.lng,
+        destinationLatitude: 36.1450,
+        destinationLongitude: 128.3936,
+        fuelType: 'GASOLINE',
+        refuelLiters: 40,
+        fuelEfficiency: 12,
+        limit: 3,
+      })
 
-    const response = await fetchRouteRecommendations({
-      originLatitude: 35.8691,
-      originLongitude: 128.5945,
-      destinationLatitude: 36.1450,
-      destinationLongitude: 128.3936,
-      fuelType: 'GASOLINE',
-      refuelLiters: 40,
-      fuelEfficiency: 12,
-      limit: 3,
-    })
+      stations.value = mapRouteRecommendationsToGasStations(response)
+      lastSource.value = 'route'
 
-    console.log('경로추천 원본 응답:', response)
-
-    stations.value = mapRouteRecommendationsToGasStations(response)
-
-    console.log('변환 후 stations:', stations.value)
-
-    lastSource.value = 'route'
-
-    const firstStation = stations.value[0]
-    if (firstStation) {
-      mapCenter.value = {
-        lat: firstStation.lat,
-        lng: firstStation.lng,
+      const firstStation = stations.value[0]
+      if (firstStation) {
+        mapCenter.value = {
+          lat: firstStation.lat,
+          lng: firstStation.lng,
+        }
       }
+    } catch (err) {
+      console.error(err)
+      error.value = err instanceof Error ? err.message : '경로 추천 실패'
+      stations.value = []
+      lastSource.value = 'none'
+    } finally {
+      loading.value = false
     }
-  } catch (err) {
-    console.error('경로 추천 실패:', err)
-    error.value =
-      err instanceof Error ? err.message : '경로 추천 실패'
-    stations.value = []
-  } finally {
-    loading.value = false
-    console.log('경로 추천 종료')
   }
-}
 
   return {
     stations,
