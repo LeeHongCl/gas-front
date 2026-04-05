@@ -69,7 +69,7 @@ function formatDecimal(value: number, digits = 1) {
 
       <label>
         <span>추천 개수</span>
-        <input v-model.number="form.limit" type="number" min="1" max="5" step="1" />
+        <input v-model.number="form.limit" type="number" min="1" max="3" step="1" />
       </label>
     </div>
 

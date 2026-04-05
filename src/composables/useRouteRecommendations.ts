@@ -10,6 +10,8 @@ import {
 } from '@/utils/routeRecommendation';
 
 export function useRouteRecommendations() {
+  console.log('✅ useRouteRecommendations 사용됨')
+
   const loading = ref(false);
   const error = ref('');
   const recommendations = ref<RouteRecommendationViewModel[]>([]);

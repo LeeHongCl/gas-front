@@ -52,8 +52,8 @@ export const useNearbyStore = defineStore('nearby', () => {
 
   const mapCenter = ref(
     persisted?.mapCenter ?? {
-      lat: 35.8691,
-      lng: 128.5945,
+      lat: 35.8779,
+      lng: 128.6280,
     },
   )
 
@@ -88,77 +88,87 @@ export const useNearbyStore = defineStore('nearby', () => {
   }
 
   async function loadRadiusStations() {
-    try {
-      loading.value = true
-      error.value = ''
-      selectedStation.value = null
+  try {
+    loading.value = true
+    error.value = ''
+    selectedStation.value = null
 
-      const response = await fetchRadiusRecommendations({
-        latitude: mapCenter.value.lat,
-        longitude: mapCenter.value.lng,
-        radius: 3000,
-        fuelType: 'GASOLINE',
-        refuelLiters: 40,
-        fuelEfficiency: 12,
-        limit: 6,
-      })
-
-      stations.value = mapRouteRecommendationsToGasStations(response)
-      lastSource.value = 'radius'
-
-      const firstStation = stations.value[0]
-      if (firstStation) {
-        mapCenter.value = {
-          lat: firstStation.lat,
-          lng: firstStation.lng,
-        }
-      }
-    } catch (err) {
-      console.error(err)
-      error.value = err instanceof Error ? err.message : '반경 추천 실패'
-      stations.value = []
-      lastSource.value = 'none'
-    } finally {
-      loading.value = false
+    const testCenter = {
+      lat: 35.8596,
+      lng: 128.6232,
     }
-  }
 
-  async function loadRouteStations() {
-    try {
-      loading.value = true
-      error.value = ''
-      selectedStation.value = null
+    console.log('✅ 반경추천 테스트 좌표:', testCenter)
 
-      const response = await fetchRouteRecommendations({
-        originLatitude: mapCenter.value.lat,
-        originLongitude: mapCenter.value.lng,
-        destinationLatitude: 35.8714,
-        destinationLongitude: 128.6014,
-        fuelType: 'GASOLINE',
-        refuelLiters: 40,
-        fuelEfficiency: 12,
-        limit: 5,
-      })
+    const response = await fetchRadiusRecommendations({
+      latitude: testCenter.lat,
+      longitude: testCenter.lng,
+      radius: 3000,
+      fuelType: 'GASOLINE',
+      refuelLiters: 40,
+      fuelEfficiency: 12,
+      limit: 3,
+    })
 
-      stations.value = mapRouteRecommendationsToGasStations(response)
-      lastSource.value = 'route'
+    stations.value = mapRouteRecommendationsToGasStations(response)
+    lastSource.value = 'radius'
 
-      const firstStation = stations.value[0]
-      if (firstStation) {
-        mapCenter.value = {
-          lat: firstStation.lat,
-          lng: firstStation.lng,
-        }
+    const firstStation = stations.value[0]
+    if (firstStation) {
+      mapCenter.value = {
+        lat: firstStation.lat,
+        lng: firstStation.lng,
       }
-    } catch (err) {
-      console.error(err)
-      error.value = err instanceof Error ? err.message : '경로 추천 실패'
-      stations.value = []
-      lastSource.value = 'none'
-    } finally {
-      loading.value = false
+    } else {
+      mapCenter.value = testCenter
     }
+  } catch (err) {
+    console.error(err)
+    error.value = err instanceof Error ? err.message : '반경 추천 실패'
+    stations.value = []
+    lastSource.value = 'none'
+  } finally {
+    loading.value = false
   }
+}
+
+ async function loadRouteStations() {
+  console.log('✅ store loadRouteStations 실행됨')
+
+  try {
+    loading.value = true
+    error.value = ''
+    selectedStation.value = null
+
+    const params = {
+      originLatitude: 35.8779,
+      originLongitude: 128.6280,
+      destinationLatitude: 35.8596,
+      destinationLongitude: 128.6232,
+      fuelType: 'GASOLINE' as const,
+      refuelLiters: 40,
+      fuelEfficiency: 12,
+      limit: 3,
+    }
+
+    console.log('✅ store route params:', params)
+
+    const response = await fetchRouteRecommendations(params)
+
+    stations.value = mapRouteRecommendationsToGasStations(response)
+    console.log('변환된 stations:', stations.value)
+    console.log('lastSource:', lastSource.value)
+    lastSource.value = 'route'
+
+  } catch (err) {
+    console.error(err)
+    error.value = err instanceof Error ? err.message : '경로 추천 실패'
+    stations.value = []
+    lastSource.value = 'none'
+  } finally {
+    loading.value = false
+  }
+}
 
   return {
     stations,

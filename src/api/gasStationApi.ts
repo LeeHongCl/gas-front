@@ -4,12 +4,13 @@ import type {
   RadiusRecommendationRequest,
 } from '@/types/gasRecommendation';
 
-const BASE_URL = '';
+const BASE_URL = ''
+
 
 export async function fetchRouteRecommendations(
   params: RouteRecommendationRequest,
 ): Promise<RouteRecommendationItem[]> {
-  const safeLimit = Math.min(Math.max(params.limit, 1), 5);
+  const safeLimit = Math.min(Math.max(params.limit, 1), 3);
 
   if (params.fuelEfficiency <= 0) {
     throw new Error('연비는 0보다 커야 합니다.');
@@ -39,7 +40,8 @@ export async function fetchRouteRecommendations(
       Accept: 'application/json',
     },
   });
-
+  
+  
   console.log('route response status:', response.status, response.statusText);
 
   if (!response.ok) {
@@ -49,7 +51,7 @@ export async function fetchRouteRecommendations(
   }
 
   const data = (await response.json()) as RouteRecommendationItem[];
-
+  console.log('route response data:', data);
   if (!Array.isArray(data)) {
     throw new Error('예상한 응답 형식이 아닙니다.');
   }
@@ -60,7 +62,7 @@ export async function fetchRouteRecommendations(
 export async function fetchRadiusRecommendations(
   params: RadiusRecommendationRequest,
 ): Promise<RouteRecommendationItem[]> {
-  const safeLimit = Math.min(Math.max(params.limit, 1), 5);
+  const safeLimit = Math.min(Math.max(params.limit, 1), 3);
   const safeRadius = Math.min(Math.max(params.radius, 1), 5000);
 
   if (params.fuelEfficiency <= 0) {
