@@ -124,41 +124,34 @@ export const useNearbyStore = defineStore('nearby', () => {
   }
 
   async function loadRouteStations() {
-    try {
-      loading.value = true
-      error.value = ''
-      selectedStation.value = null
+  console.log('경로 추천 실행')
 
-      const response = await fetchRouteRecommendations({
-        originLatitude: mapCenter.value.lat,
-        originLongitude: mapCenter.value.lng,
-        destinationLatitude: 35.1796,
-        destinationLongitude: 129.0756,
-        fuelType: 'GASOLINE',
-        refuelLiters: 40,
-        fuelEfficiency: 12,
-        limit: 3,
-      })
+  try {
+    loading.value = true
+    error.value = ''
+    selectedStation.value = null
 
-      stations.value = mapRouteRecommendationsToGasStations(response)
-      lastSource.value = 'route'
+    const response = await fetchRouteRecommendations({
+      originLatitude: 35.8691,
+      originLongitude: 128.5945,
+      destinationLatitude: 36.1450,
+      destinationLongitude: 128.3936,
+      fuelType: 'GASOLINE',
+      refuelLiters: 40,
+      fuelEfficiency: 12,
+      limit: 3,
+    })
 
-      const firstStation = stations.value[0]
-      if (firstStation) {
-        mapCenter.value = {
-          lat: firstStation.lat,
-          lng: firstStation.lng,
-        }
-      }
-    } catch (err) {
-      console.error(err)
-      error.value = err instanceof Error ? err.message : '경로 추천 실패'
-      stations.value = []
-      lastSource.value = 'none'
-    } finally {
-      loading.value = false
-    }
+    stations.value = mapRouteRecommendationsToGasStations(response)
+
+  } catch (err) {
+    console.error(err)
+    error.value = '경로 추천 실패'
+    stations.value = []
+  } finally {
+    loading.value = false
   }
+}
 
   return {
     stations,
