@@ -3,7 +3,7 @@ import type {
   RouteRecommendationRequest,
 } from '@/types/gasRecommendation';
 
-const BASE_URL = 'http://43.203.29.58:8080';
+const BASE_URL = '';
 
 export async function fetchRouteRecommendations(
   params: RouteRecommendationRequest,
@@ -29,7 +29,7 @@ export async function fetchRouteRecommendations(
     limit: String(safeLimit),
   });
 
-  const url = `${BASE_URL}/api/gas-stations/recommendations/route?${searchParams.toString()}`;
+  const url = `/api/gas-stations/recommendations/route?${searchParams.toString()}`
   console.log('request url:', url);
 
   const response = await fetch(url, {
