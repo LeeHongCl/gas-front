@@ -2,12 +2,13 @@
   <div v-if="station" class="detail-overlay" @click.self="$emit('close')">
     <section class="detail-sheet">
       <div class="handle"></div>
+
       <div class="header-row">
         <div>
           <h2>{{ station.name }}</h2>
           <p>{{ station.brand }} · {{ station.address }}</p>
         </div>
-        <button class="close-btn" @click="$emit('close')">닫기</button>
+        <button type="button" class="close-btn" @click="$emit('close')">닫기</button>
       </div>
 
       <div class="price-grid">
@@ -28,13 +29,26 @@
       </div>
 
       <div class="info-list">
-        <div class="info-item">전화번호: {{ station.tel }}</div>
+        <div class="info-item">전화번호: {{ station.tel || '-' }}</div>
         <div class="info-item">거리: {{ formatDistance(station.distance) }}</div>
       </div>
 
       <div class="action-row">
-        <a class="secondary-btn" :href="`tel:${station.tel}`">전화</a>
-        <button class="primary-btn">길찾기</button>
+        <a
+          class="secondary-btn"
+          :href="station.tel ? `tel:${station.tel}` : undefined"
+          @click.stop
+        >
+          전화
+        </a>
+
+        <button
+          type="button"
+          class="primary-btn"
+          @click.stop.prevent="handleStartNavigation"
+        >
+          길찾기
+        </button>
       </div>
     </section>
   </div>
@@ -42,14 +56,35 @@
 
 <script setup lang="ts">
 import type { GasStation } from '@/types/gasStation'
+import { useRouteStore } from '@/stores/route'
 
-defineProps<{
+const routeStore = useRouteStore()
+
+const props = defineProps<{
   station: GasStation | null
 }>()
 
 defineEmits<{
   (e: 'close'): void
 }>()
+
+function handleStartNavigation() {
+  console.log('✅ 길찾기 버튼 클릭됨', props.station)
+
+  if (!props.station) {
+    console.warn('선택된 주유소가 없습니다.')
+    return
+  }
+
+  routeStore.selectRecommendedStation(props.station)
+  routeStore.startNavigationToStation()
+
+  console.log('✅ 내비 시작 요청 완료', {
+    selectedStation: routeStore.selectedStation,
+    navigationStep: routeStore.navigationStep,
+    routePath: routeStore.routePath,
+  })
+}
 
 function formatDistance(distance?: number) {
   if (distance == null) return '-'
@@ -69,6 +104,8 @@ function formatDistance(distance?: number) {
 }
 
 .detail-sheet {
+  position: relative;
+  z-index: 91;
   width: 100%;
   padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
   border-top-left-radius: 28px;
@@ -169,10 +206,13 @@ function formatDistance(distance?: number) {
   align-items: center;
   justify-content: center;
   background: #f3f4f6;
+  text-decoration: none;
+  color: #111827;
 }
 
 .primary-btn {
   color: white;
   background: #2563eb;
+  cursor: pointer;
 }
 </style>

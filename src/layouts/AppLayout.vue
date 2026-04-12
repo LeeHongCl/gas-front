@@ -1,8 +1,9 @@
 <template>
-  <div class="app-shell">
-    <main class="app-content">
-      <router-view />
+  <div class="app-layout">
+    <main class="app-main">
+      <RouterView />
     </main>
+
     <BottomTabBar />
   </div>
 </template>
@@ -12,13 +13,13 @@ import BottomTabBar from '@/components/BottomTabBar.vue'
 </script>
 
 <style scoped>
-.app-shell {
+.app-layout {
   min-height: 100dvh;
-  background: #f5f7fb;
+  background: #f9fafb;
 }
 
-.app-content {
-  min-height: calc(100dvh - 82px);
-  padding-bottom: 90px;
+.app-main {
+  min-height: 100dvh;
+  padding-bottom: 82px;
 }
 </style>

@@ -19,6 +19,8 @@ const props = defineProps<{
     lat: number
     lng: number
   }
+  routePath?: { lat: number; lng: number }[]
+  currentLocation?: { lat: number; lng: number } | null
 }>()
 
 const emit = defineEmits<{
@@ -30,6 +32,8 @@ const mapRef = ref<HTMLElement | null>(null)
 let map: any = null
 let markers: any[] = []
 let currentMarker: any = null
+let userMarker: any = null
+let polyline: any = null
 
 const KAKAO_KEY = import.meta.env.VITE_KAKAO_MAP_API_KEY
 
@@ -52,7 +56,7 @@ function loadKakaoMapScript(): Promise<void> {
     }
 
     const script = document.createElement('script')
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=d8d3668f7759340c2f4dcb70c0f701bd&autoload=false`
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=d8d3668f7759340c2f4dcb70c0f701bd&autoload=false&libraries=services`
     script.async = true
     script.dataset.kakaoMap = 'true'
 
@@ -83,6 +87,24 @@ function renderCurrentLocationMarker() {
   })
 }
 
+function renderUserLocation() {
+  if (!map || !props.currentLocation) return
+
+  const position = new window.kakao.maps.LatLng(
+    props.currentLocation.lat,
+    props.currentLocation.lng,
+  )
+
+  if (!userMarker) {
+    userMarker = new window.kakao.maps.Marker({
+      map,
+      position,
+    })
+  } else {
+    userMarker.setPosition(position)
+  }
+}
+
 function renderStationMarkers() {
   if (!map) return
 
@@ -102,6 +124,31 @@ function renderStationMarkers() {
     })
 
     markers.push(marker)
+  })
+}
+
+function renderRouteLine() {
+  if (!map) return
+
+  if (polyline) {
+    polyline.setMap(null)
+    polyline = null
+  }
+
+  const pathData = props.routePath ?? []
+  if (pathData.length < 2) return
+
+  const path = pathData.map(
+    (point) => new window.kakao.maps.LatLng(point.lat, point.lng),
+  )
+
+  polyline = new window.kakao.maps.Polyline({
+    map,
+    path,
+    strokeWeight: 5,
+    strokeColor: '#2563eb',
+    strokeOpacity: 0.8,
+    strokeStyle: 'solid',
   })
 }
 
@@ -128,13 +175,16 @@ async function initMap() {
   map = new window.kakao.maps.Map(mapRef.value, options)
 
   renderCurrentLocationMarker()
+  renderUserLocation()
   renderStationMarkers()
+  renderRouteLine()
+
   setTimeout(() => {
-  map.relayout()
-  map.setCenter(
-    new window.kakao.maps.LatLng(props.center.lat, props.center.lng)
-  )
-}, 0)
+    map.relayout()
+    map.setCenter(
+      new window.kakao.maps.LatLng(props.center.lat, props.center.lng),
+    )
+  }, 0)
 }
 
 onMounted(async () => {
@@ -169,6 +219,22 @@ watch(
   () => {
     focusSelectedStation()
   },
+)
+
+watch(
+  () => props.currentLocation,
+  () => {
+    renderUserLocation()
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.routePath,
+  () => {
+    renderRouteLine()
+  },
+  { deep: true },
 )
 </script>
 

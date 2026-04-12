@@ -4,7 +4,7 @@ import type {
   RadiusRecommendationRequest,
 } from '@/types/gasRecommendation';
 
-const BASE_URL = ''
+const BASE_URL = 'http://43.203.29.58:8080'
 
 
 export async function fetchRouteRecommendations(

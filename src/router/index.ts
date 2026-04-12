@@ -34,11 +34,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'home', component: HomePage },
         { path: 'nearby', name: 'nearby', component: NearbyPage },
-        {
-          path: 'route-recommendation',
-          name: 'route-recommendation',
-          component: RouteRecommendationPage,
-        },
+        { path: 'route', name: 'route', component: RouteRecommendationPage },
         { path: 'favorites', name: 'favorites', component: FavoritesPage },
         { path: 'settings', name: 'settings', component: SettingsPage },
         { path: 'my-info', name: 'my-info', component: MyInfoPage },
