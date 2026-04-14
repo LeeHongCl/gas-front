@@ -4,7 +4,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -17,7 +16,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 카카오 모빌리티 REST API - CORS 우회용 프록시
+      // 카카오 모빌리티 REST API - CORS 우회
       '/kakao-navi': {
         target: 'https://apis-navi.kakaomobility.com',
         changeOrigin: true,

@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
+      "source": "/kakao-navi/:path*",
+      "destination": "https://apis-navi.kakaomobility.com/:path*"
+    },
+    {
       "source": "/api/(.*)",
-      "destination": "http://43.203.29.58:8080/api/$1"
+      "destination": "http://43.203.29.58:8080/$1"
     },
     {
       "source": "/(.*)",
