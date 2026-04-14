@@ -245,10 +245,11 @@ export const useRouteStore = defineStore('route', () => {
 
       recommendedStations.value = mapRouteRecommendationsToGasStations(response)
 
-      if (recommendedStations.value.length > 0) {
+      const first = recommendedStations.value[0]
+      if (first) {
         mapCenter.value = {
-          lat: recommendedStations.value[0].lat,
-          lng: recommendedStations.value[0].lng,
+          lat: first.lat,
+          lng: first.lng,
         }
       } else {
         error.value = '추천 결과가 없습니다.'
@@ -293,6 +294,8 @@ export const useRouteStore = defineStore('route', () => {
     stopNavigation,
     clearRoutePlan,
     loadRouteRecommendations,
+    buildRouteToStation,
+    buildRouteToDestination,
     buildFullRoute,
   }
 })

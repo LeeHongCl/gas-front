@@ -78,7 +78,11 @@ export async function fetchKakaoRoute(
       // vertexes = [lng1, lat1, lng2, lat2, ...] 플랫 배열
       const v: number[] = road.vertexes ?? []
       for (let i = 0; i < v.length - 1; i += 2) {
-        path.push({ lng: v[i], lat: v[i + 1] })
+        const lng = v[i]
+        const lat = v[i + 1]
+        if (lng !== undefined && lat !== undefined) {
+          path.push({ lng, lat })
+        }
       }
     }
   }
