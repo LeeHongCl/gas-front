@@ -1,261 +1,325 @@
-<script setup lang="ts">
-import { fuelTypeOptions } from '@/constants/fuel';
-import { useRouteRecommendations } from '@/composables/useRouteRecommendations';
-
-const {
-  form,
-  loading,
-  error,
-  recommendations,
-  loadRecommendations,
-} = useRouteRecommendations();
-
-function formatNumber(value: number) {
-  return value.toLocaleString();
-}
-
-function formatDecimal(value: number, digits = 1) {
-  return value.toFixed(digits);
-}
-</script>
-
 <template>
-  <section class="route-panel">
-    <h2 class="panel-title">경로 기반 주유소 추천</h2>
+  <Transition name="sheet">
+    <div v-if="station" class="detail-overlay" @click.self="$emit('close')">
+      <section class="detail-sheet">
+        <div class="handle" />
 
-    <div class="form-grid">
-      <label>
-        <span>출발지 위도</span>
-        <input v-model.number="form.originLatitude" type="number" step="any" />
-      </label>
+        <!-- 헤더 -->
+        <div class="header-row">
+          <div class="header-info">
+            <p class="brand-label">{{ station.brand }}</p>
+            <h2 class="station-name">{{ station.name }}</h2>
+            <p v-if="station.address" class="address">{{ station.address }}</p>
+          </div>
+          <button type="button" class="close-btn" @click="$emit('close')">✕</button>
+        </div>
 
-      <label>
-        <span>출발지 경도</span>
-        <input v-model.number="form.originLongitude" type="number" step="any" />
-      </label>
+        <!-- 거리 뱃지 -->
+        <div v-if="station.distance != null" class="distance-badge">
+          📍 {{ formatDistance(station.distance) }} 거리
+        </div>
 
-      <label>
-        <span>도착지 위도</span>
-        <input v-model.number="form.destinationLatitude" type="number" step="any" />
-      </label>
-
-      <label>
-        <span>도착지 경도</span>
-        <input v-model.number="form.destinationLongitude" type="number" step="any" />
-      </label>
-
-      <label>
-        <span>유종</span>
-        <select v-model="form.fuelType">
-          <option
-            v-for="option in fuelTypeOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-
-      <label>
-        <span>주유량(L)</span>
-        <input v-model.number="form.refuelLiters" type="number" min="1" step="1" />
-      </label>
-
-      <label>
-        <span>연비(km/L)</span>
-        <input v-model.number="form.fuelEfficiency" type="number" min="0.1" step="0.1" />
-      </label>
-
-      <label>
-        <span>추천 개수</span>
-        <input v-model.number="form.limit" type="number" min="1" max="3" step="1" />
-      </label>
-    </div>
-
-    <div class="action-row">
-      <button class="search-btn" :disabled="loading" @click="loadRecommendations">
-        {{ loading ? '조회 중...' : '추천 받기' }}
-      </button>
-    </div>
-
-    <p v-if="error" class="error-text">{{ error }}</p>
-
-    <div v-if="recommendations.length > 0" class="result-list">
-      <article
-        v-for="item in recommendations"
-        :key="item.id"
-        class="result-card"
-      >
-        <div class="result-header">
-          <strong class="rank-badge">{{ item.rank }}위</strong>
-          <div>
-            <h3 class="station-name">{{ item.name }}</h3>
-            <p class="brand-text">{{ item.brand }}</p>
+        <!-- 가격 -->
+        <div class="price-grid">
+          <div class="price-box gasoline">
+            <span class="price-label">휘발유</span>
+            <strong class="price-value">{{ station.gasolinePrice.toLocaleString() }}<em>원</em></strong>
+          </div>
+          <div class="price-box diesel">
+            <span class="price-label">경유</span>
+            <strong class="price-value">{{ station.dieselPrice.toLocaleString() }}<em>원</em></strong>
           </div>
         </div>
 
-        <div class="info-grid">
-          <p><span>가격</span><strong>{{ formatNumber(item.price) }}원</strong></p>
-          <p><span>거리</span><strong>{{ formatDecimal(item.distance) }} km</strong></p>
-          <p><span>우회거리</span><strong>{{ formatDecimal(item.detourDistance) }} km</strong></p>
-          <p><span>점수</span><strong>{{ formatDecimal(item.score, 2) }}</strong></p>
-          <p><span>전방 도로 속도</span><strong>{{ formatDecimal(item.frontRoadSpeed) }}</strong></p>
-          <p><span>주유소 ID</span><strong>{{ item.id }}</strong></p>
+        <!-- 태그 -->
+        <div v-if="hasTags" class="tag-row">
+          <span v-if="station.isSelf" class="tag self">셀프</span>
+          <span v-if="station.hasCarWash" class="tag wash">세차 가능</span>
+          <span v-if="station.hasStore" class="tag store">편의점 있음</span>
         </div>
-      </article>
+
+        <!-- 전화번호 -->
+        <div v-if="station.tel" class="info-row">
+          <span class="info-icon">📞</span>
+          <span>{{ station.tel }}</span>
+        </div>
+
+        <!-- 액션 버튼 -->
+        <div class="action-row">
+          <a
+            class="action-btn secondary"
+            :class="{ disabled: !station.tel }"
+            :href="station.tel ? `tel:${station.tel}` : undefined"
+            @click.stop
+          >
+            📞 전화
+          </a>
+          <button
+            type="button"
+            class="action-btn primary"
+            :disabled="navigating"
+            @click.stop.prevent="handleStartNavigation"
+          >
+            {{ navigating ? '경로 계산 중...' : '🛣️ 길찾기' }}
+          </button>
+        </div>
+      </section>
     </div>
-  </section>
+  </Transition>
 </template>
 
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import type { GasStation } from '@/types/gasStation'
+import { useRouteStore } from '@/stores/route'
+
+const routeStore = useRouteStore()
+
+const props = defineProps<{
+  station: GasStation | null
+}>()
+
+defineEmits<{
+  (e: 'close'): void
+}>()
+
+const navigating = ref(false)
+
+const hasTags = computed(
+  () =>
+    props.station &&
+    (props.station.isSelf || props.station.hasCarWash || props.station.hasStore),
+)
+
+async function handleStartNavigation() {
+  if (!props.station) return
+  navigating.value = true
+  try {
+    routeStore.selectRecommendedStation(props.station)
+    await routeStore.startNavigationToStation()
+  } finally {
+    navigating.value = false
+  }
+}
+
+function formatDistance(distance?: number) {
+  if (distance == null) return '-'
+  if (distance < 1) return `${Math.round(distance * 1000)}m`
+  return `${distance.toFixed(1)}km`
+}
+</script>
+
 <style scoped>
-.route-panel {
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 0.2s ease;
+}
+.sheet-enter-active .detail-sheet,
+.sheet-leave-active .detail-sheet {
+  transition: transform 0.25s ease;
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
+}
+.sheet-enter-from .detail-sheet,
+.sheet-leave-to .detail-sheet {
+  transform: translateY(100%);
 }
 
-.panel-title {
-  margin: 0 0 16px;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.form-grid label {
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: flex-end;
+  background: rgba(15, 23, 42, 0.4);
 }
 
-.form-grid span {
-  font-size: 14px;
-  font-weight: 600;
-  color: #444;
+.detail-sheet {
+  width: 100%;
+  padding: 0 16px calc(28px + env(safe-area-inset-bottom));
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  background: white;
 }
 
-.form-grid input,
-.form-grid select {
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid #dcdcdc;
-  border-radius: 10px;
-  font-size: 14px;
-  outline: none;
-}
-
-.form-grid input:focus,
-.form-grid select:focus {
-  border-color: #111;
-}
-
-.action-row {
-  margin-top: 16px;
-}
-
-.search-btn {
-  height: 46px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 10px;
-  background: #111;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.search-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-text {
-  margin-top: 12px;
-  color: #d93025;
-  font-size: 14px;
-}
-
-.result-list {
-  margin-top: 20px;
-  display: grid;
-  gap: 14px;
-}
-
-.result-card {
-  padding: 18px;
-  border: 1px solid #ededed;
-  border-radius: 16px;
-  background: #fafafa;
-}
-
-.result-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.rank-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  height: 32px;
-  padding: 0 10px;
+.handle {
+  width: 44px;
+  height: 4px;
   border-radius: 999px;
-  background: #111;
-  color: white;
-  font-size: 13px;
+  background: #d1d5db;
+  margin: 12px auto 16px;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.header-info { flex: 1; min-width: 0; }
+
+.brand-label {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.3px;
 }
 
 .station-name {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.address {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.close-btn {
+  border: 0;
+  background: #f3f4f6;
+  color: #6b7280;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.distance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 13px;
   font-weight: 700;
 }
 
-.brand-text {
-  margin: 4px 0 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.info-grid {
+.price-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
-}
-
-.info-grid p {
-  margin: 0;
-  display: flex;
-  justify-content: space-between;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  padding: 10px 12px;
-  background: white;
-  border-radius: 10px;
+  margin-top: 16px;
+}
+
+.price-box {
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.price-box.gasoline { background: #eff6ff; }
+.price-box.diesel   { background: #f0fdf4; }
+
+.price-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.price-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.price-value em {
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  color: #6b7280;
+  margin-left: 2px;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tag.self   { background: #eff6ff; color: #1d4ed8; }
+.tag.wash   { background: #f0f9ff; color: #0369a1; }
+.tag.store  { background: #fdf4ff; color: #7e22ce; }
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
   font-size: 14px;
+  color: #374151;
 }
 
-.info-grid span {
-  color: #666;
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.info-grid strong {
-  color: #111;
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  border: 0;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@media (max-width: 768px) {
-  .form-grid,
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
+.action-btn:active { transform: scale(0.97); }
+
+.action-btn.secondary {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.action-btn.secondary.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.action-btn.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.action-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

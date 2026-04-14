@@ -1,35 +1,15 @@
 <template>
   <nav class="bottom-tab-bar">
     <button
+      v-for="tab in tabs"
+      :key="tab.path"
       class="tab-item"
-      :class="{ active: currentPath === '/app' }"
-      @click="goTo('/app')"
+      :class="{ active: currentPath === tab.path }"
+      @click="goTo(tab.path)"
     >
-      <span>홈</span>
-    </button>
-
-    <button
-      class="tab-item"
-      :class="{ active: currentPath === '/app/nearby' }"
-      @click="goTo('/app/nearby')"
-    >
-      <span>주변</span>
-    </button>
-
-    <button
-      class="tab-item"
-      :class="{ active: currentPath === '/app/route' }"
-      @click="goTo('/app/route')"
-    >
-      <span>경로</span>
-    </button>
-
-    <button
-      class="tab-item"
-      :class="{ active: currentPath === '/app/my-info' }"
-      @click="goTo('/app/my-info')"
-    >
-      <span>내 정보</span>
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-label">{{ tab.label }}</span>
+      <span v-if="currentPath === tab.path" class="active-dot" />
     </button>
   </nav>
 </template>
@@ -42,6 +22,13 @@ const route = useRoute()
 const router = useRouter()
 
 const currentPath = computed(() => route.path)
+
+const tabs = [
+  { path: '/app',         icon: '🗺️',  label: '홈' },
+  { path: '/app/nearby',  icon: '📍',  label: '주변' },
+  { path: '/app/route',   icon: '🛣️',  label: '경로' },
+  { path: '/app/my-info', icon: '👤',  label: '내 정보' },
+]
 
 function goTo(path: string) {
   if (route.path === path) return
@@ -58,22 +45,54 @@ function goTo(path: string) {
   z-index: 60;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid #e5e7eb;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(229, 231, 235, 0.8);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .tab-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   border: 0;
   background: transparent;
-  padding: 10px 0;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 700;
+  padding: 8px 4px 4px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-item.active {
-  color: #111827;
+  color: #2563eb;
+}
+
+.tab-icon {
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.tab-item.active .tab-icon {
+  transform: translateY(-2px);
+}
+
+.tab-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.active-dot {
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2563eb;
 }
 </style>

@@ -36,18 +36,39 @@
 
       <!-- 🔴 내비 모드 -->
       <template v-else>
+        <!-- 상단 상태 카드 -->
         <div class="nav-top-card">
-          <strong>
+          <div class="nav-status">
+            <span class="nav-dot" :class="routeStore.navigationStep" />
+            <strong>
+              {{
+                routeStore.navigationStep === 'to_station'
+                  ? `${routeStore.selectedStation?.name ?? '주유소'}로 이동 중`
+                  : `${routeStore.destination?.name ?? '목적지'}로 이동 중`
+              }}
+            </strong>
+          </div>
+          <p class="nav-sub">
             {{
               routeStore.navigationStep === 'to_station'
-                ? `${routeStore.selectedStation?.name ?? ''}로 이동 중`
-                : '목적지로 이동 중'
+                ? '주유소에 도착하면 아래 버튼을 눌러주세요'
+                : '목적지까지 안내 중입니다'
             }}
-          </strong>
-          <p>현재 내비게이션 진행 중입니다</p>
+          </p>
         </div>
 
+        <!-- 하단 버튼 패널 -->
         <div class="nav-bottom-panel">
+          <!-- 주유소 → 목적지 단계 전환 버튼 (to_station 일 때만) -->
+          <button
+            v-if="routeStore.navigationStep === 'to_station'"
+            class="arrive-btn"
+            :disabled="navigatingToDestination"
+            @click="handleArrive"
+          >
+            {{ navigatingToDestination ? '경로 계산 중...' : '🚗 주유소 도착 — 목적지로 출발' }}
+          </button>
+
           <button class="exit-nav-btn" @click="routeStore.stopNavigation()">
             길찾기 종료
           </button>
@@ -74,6 +95,16 @@ import { useRouteStore } from '@/stores/route'
 
 const routeStore = useRouteStore()
 const sheetExpanded = ref(true)
+const navigatingToDestination = ref(false)
+
+async function handleArrive() {
+  navigatingToDestination.value = true
+  try {
+    await routeStore.startNavigationToDestination()
+  } finally {
+    navigatingToDestination.value = false
+  }
+}
 
 let watchId: number | null = null
 
@@ -82,10 +113,7 @@ onMounted(() => {
 
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
-      routeStore.updateCurrentLocation(
-        pos.coords.latitude,
-        pos.coords.longitude,
-      )
+      routeStore.updateCurrentLocation(pos.coords.latitude, pos.coords.longitude)
     },
     (err) => {
       console.error(err)
@@ -132,10 +160,41 @@ onUnmounted(() => {
   left: 16px;
   right: 16px;
   z-index: 40;
-  padding: 16px;
+  padding: 16px 18px;
   border-radius: 18px;
   background: white;
-  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.1);
+}
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nav-dot.to_station {
+  background: #2563eb;
+}
+
+.nav-dot.to_destination {
+  background: #16a34a;
+}
+
+.nav-status strong {
+  font-size: 16px;
+}
+
+.nav-sub {
+  margin: 8px 0 0 20px;
+  font-size: 13px;
+  color: #6b7280;
 }
 
 .nav-bottom-panel {
@@ -144,6 +203,26 @@ onUnmounted(() => {
   left: 16px;
   right: 16px;
   z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arrive-btn {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: #2563eb;
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.arrive-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .exit-nav-btn {
@@ -151,8 +230,9 @@ onUnmounted(() => {
   height: 48px;
   border: 0;
   border-radius: 14px;
-  background: black;
+  background: #111827;
   color: white;
   font-weight: 800;
+  cursor: pointer;
 }
 </style>

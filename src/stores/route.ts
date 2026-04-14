@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { GasStation } from '@/types/gasStation'
 import { fetchRouteRecommendations } from '@/api/gasStationApi'
 import { mapRouteRecommendationsToGasStations } from '@/utils/mapRouteRecommendationsToGasStations'
+import { fetchKakaoRoute } from '@/utils/kakaoRouteApi'
 
 console.log('✅ route store loaded')
 
@@ -18,25 +19,24 @@ export const useRouteStore = defineStore('route', () => {
 
   const recommendedStations = ref<GasStation[]>([])
   const selectedStation = ref<GasStation | null>(null)
-const pageMode = ref<'planning' | 'navigating'>('planning')
+  const pageMode = ref<'planning' | 'navigating'>('planning')
   const loading = ref(false)
   const error = ref('')
 
-  const mapCenter = ref({
-    lat: 35.8691,
-    lng: 128.5945,
-  })
+  const mapCenter = ref({ lat: 35.8691, lng: 128.5945 })
 
   const navigationStep = ref<'idle' | 'to_station' | 'to_destination'>('idle')
   const currentLocation = ref<{ lat: number; lng: number } | null>(null)
   const routePath = ref<{ lat: number; lng: number }[]>([])
 
+  // 경로 거리/시간 요약 (UI 표시용)
+  const routeSummary = ref<{ distanceM: number; durationSec: number } | null>(null)
+
+  // ─── 기본 세터 ────────────────────────────────────────────────
+
   function setOrigin(point: RoutePoint) {
     origin.value = point
-    mapCenter.value = {
-      lat: point.lat,
-      lng: point.lng,
-    }
+    mapCenter.value = { lat: point.lat, lng: point.lng }
   }
 
   function setDestination(point: RoutePoint) {
@@ -45,146 +45,137 @@ const pageMode = ref<'planning' | 'navigating'>('planning')
 
   function selectRecommendedStation(station: GasStation) {
     console.log('✅ selectRecommendedStation', station)
-
     selectedStation.value = station
-    mapCenter.value = {
-      lat: station.lat,
-      lng: station.lng,
-    }
+    mapCenter.value = { lat: station.lat, lng: station.lng }
   }
 
   function updateCurrentLocation(lat: number, lng: number) {
-    console.log('✅ updateCurrentLocation', { lat, lng })
-
     currentLocation.value = { lat, lng }
+  }
 
-    if (navigationStep.value === 'to_station' && selectedStation.value) {
-      buildSimpleRouteToStation()
-    } else if (navigationStep.value === 'to_destination' && destination.value) {
-      buildSimpleRouteToDestination()
+  // ─── 카카오 모빌리티 실제 도로 경로 ──────────────────────────
+
+  /**
+   * 출발지 → 주유소 경로를 카카오 모빌리티 API로 가져와 routePath에 세팅합니다.
+   */
+  async function buildRouteToStation(): Promise<void> {
+    const startPoint = origin.value ?? currentLocation.value
+    if (!startPoint || !selectedStation.value) {
+      console.warn('❌ buildRouteToStation: 출발지 또는 선택 주유소 없음')
+      return
+    }
+
+    try {
+      const result = await fetchKakaoRoute(
+        { lat: startPoint.lat, lng: startPoint.lng },
+        { lat: selectedStation.value.lat, lng: selectedStation.value.lng },
+      )
+
+      routePath.value = result.path
+      routeSummary.value = {
+        distanceM: result.totalDistanceM,
+        durationSec: result.totalDurationSec,
+      }
+
+      console.log('✅ 주유소까지 경로 생성됨', result.path.length, '개 좌표')
+    } catch (err) {
+      console.error('카카오 경로(주유소) 오류:', err)
+      // 실패 시 직선 폴백
+      routePath.value = [
+        { lat: startPoint.lat, lng: startPoint.lng },
+        { lat: selectedStation.value.lat, lng: selectedStation.value.lng },
+      ]
+      routeSummary.value = null
     }
   }
 
-  function buildSimpleRouteToStation() {
-  const startPoint = origin.value
-    ? { lat: origin.value.lat, lng: origin.value.lng }
-    : currentLocation.value
+  /**
+   * 주유소 → 목적지 경로를 카카오 모빌리티 API로 가져와 routePath에 세팅합니다.
+   */
+  async function buildRouteToDestination(): Promise<void> {
+    const startPoint = selectedStation.value
+      ? { lat: selectedStation.value.lat, lng: selectedStation.value.lng }
+      : currentLocation.value
 
-  console.log('✅ buildSimpleRouteToStation 실행', {
-    origin: origin.value,
-    currentLocation: currentLocation.value,
-    startPoint,
-    selectedStation: selectedStation.value,
-  })
-
-  if (!startPoint || !selectedStation.value) {
-    console.warn('❌ routePath 생성 실패: startPoint 또는 selectedStation 없음')
-    return
-  }
-
-  routePath.value = [
-    { ...startPoint },
-    {
-      lat: selectedStation.value.lat,
-      lng: selectedStation.value.lng,
-    },
-  ]
-
-  console.log('✅ routePath 생성됨', routePath.value)
-}
-
-  function buildSimpleRouteToDestination() {
-  const startPoint = selectedStation.value
-    ? { lat: selectedStation.value.lat, lng: selectedStation.value.lng }
-    : currentLocation.value
-
-  console.log('✅ buildSimpleRouteToDestination 실행', {
-    selectedStation: selectedStation.value,
-    currentLocation: currentLocation.value,
-    destination: destination.value,
-    startPoint,
-  })
-
-  if (!startPoint || !destination.value) {
-    console.warn('❌ 목적지 routePath 생성 실패')
-    return
-  }
-
-  routePath.value = [
-    { ...startPoint },
-    {
-      lat: destination.value.lat,
-      lng: destination.value.lng,
-    },
-  ]
-
-  console.log('✅ 목적지 routePath 생성됨', routePath.value)
-}
-  function startNavigationToStation() {
-  console.log('✅ startNavigationToStation 실행', {
-    selectedStation: selectedStation.value,
-    origin: origin.value,
-    currentLocation: currentLocation.value,
-  })
-
-  if (!selectedStation.value) {
-    error.value = '먼저 주유소를 선택하세요.'
-    return
-  }
-
-  navigationStep.value = 'to_station'
-  pageMode.value = 'navigating'
-  error.value = ''
-
-  if (origin.value) {
-    mapCenter.value = {
-      lat: origin.value.lat,
-      lng: origin.value.lng,
+    if (!startPoint || !destination.value) {
+      console.warn('❌ buildRouteToDestination: 시작 또는 목적지 없음')
+      return
     }
-  } else if (currentLocation.value) {
-    mapCenter.value = {
-      lat: currentLocation.value.lat,
-      lng: currentLocation.value.lng,
-    }
-  } else {
-    mapCenter.value = {
-      lat: selectedStation.value.lat,
-      lng: selectedStation.value.lng,
+
+    try {
+      const result = await fetchKakaoRoute(
+        { lat: startPoint.lat, lng: startPoint.lng },
+        { lat: destination.value.lat, lng: destination.value.lng },
+      )
+
+      routePath.value = result.path
+      routeSummary.value = {
+        distanceM: result.totalDistanceM,
+        durationSec: result.totalDurationSec,
+      }
+
+      console.log('✅ 목적지까지 경로 생성됨', result.path.length, '개 좌표')
+    } catch (err) {
+      console.error('카카오 경로(목적지) 오류:', err)
+      // 실패 시 직선 폴백
+      routePath.value = [
+        { lat: startPoint.lat, lng: startPoint.lng },
+        { lat: destination.value.lat, lng: destination.value.lng },
+      ]
+      routeSummary.value = null
     }
   }
 
-  buildSimpleRouteToStation()
-}
-function stopNavigation() {
-  console.log('🛑 길찾기 종료')
+  /**
+   * 출발지 → 주유소 → 목적지 전체 경로를 한번에 그립니다. (경유지 포함)
+   * RouteRecommendationPage에서 추천 결과 확인 후 전체 미리보기에 사용합니다.
+   */
+  async function buildFullRoute(): Promise<void> {
+    if (!origin.value || !selectedStation.value || !destination.value) return
 
-  navigationStep.value = 'idle'
-  pageMode.value = 'planning'
+    try {
+      const result = await fetchKakaoRoute(
+        { lat: origin.value.lat, lng: origin.value.lng },
+        { lat: destination.value.lat, lng: destination.value.lng },
+        { lat: selectedStation.value.lat, lng: selectedStation.value.lng },
+      )
 
-  // 경로 제거
-  routePath.value = []
+      routePath.value = result.path
+      routeSummary.value = {
+        distanceM: result.totalDistanceM,
+        durationSec: result.totalDurationSec,
+      }
 
-  // 선택된 주유소 유지 or 해제 (선택)
-  selectedStation.value = null
-
-  // 지도 중심을 출발지 or 기본값으로 복구
-  if (origin.value) {
-    mapCenter.value = {
-      lat: origin.value.lat,
-      lng: origin.value.lng,
-    }
-  } else {
-    mapCenter.value = {
-      lat: 35.8691,
-      lng: 128.5945,
+      console.log('✅ 전체 경로 생성됨 (경유지 포함)', result.path.length, '개 좌표')
+    } catch (err) {
+      console.error('카카오 전체 경로 오류:', err)
+      routePath.value = []
+      routeSummary.value = null
     }
   }
-}
-  function startNavigationToDestination() {
-    console.log('✅ startNavigationToDestination 실행', {
-      destination: destination.value,
-      currentLocation: currentLocation.value,
-    })
+
+  // ─── 내비게이션 제어 ──────────────────────────────────────────
+
+  async function startNavigationToStation() {
+    console.log('✅ startNavigationToStation 실행')
+
+    if (!selectedStation.value) {
+      error.value = '먼저 주유소를 선택하세요.'
+      return
+    }
+
+    navigationStep.value = 'to_station'
+    pageMode.value = 'navigating'
+    error.value = ''
+
+    const center = origin.value ?? currentLocation.value ?? selectedStation.value
+    mapCenter.value = { lat: center.lat, lng: center.lng }
+
+    await buildRouteToStation()
+  }
+
+  async function startNavigationToDestination() {
+    console.log('✅ startNavigationToDestination 실행')
 
     if (!destination.value) {
       error.value = '최종 목적지가 없습니다.'
@@ -194,12 +185,24 @@ function stopNavigation() {
     navigationStep.value = 'to_destination'
     error.value = ''
 
-    mapCenter.value = {
-      lat: destination.value.lat,
-      lng: destination.value.lng,
-    }
+    const center = selectedStation.value ?? currentLocation.value ?? destination.value
+    mapCenter.value = { lat: center.lat, lng: center.lng }
 
-    buildSimpleRouteToDestination()
+    await buildRouteToDestination()
+  }
+
+  function stopNavigation() {
+    console.log('🛑 길찾기 종료')
+
+    navigationStep.value = 'idle'
+    pageMode.value = 'planning'
+    routePath.value = []
+    routeSummary.value = null
+    selectedStation.value = null
+
+    mapCenter.value = origin.value
+      ? { lat: origin.value.lat, lng: origin.value.lng }
+      : { lat: 35.8691, lng: 128.5945 }
   }
 
   function clearRoutePlan() {
@@ -210,7 +213,10 @@ function stopNavigation() {
     error.value = ''
     navigationStep.value = 'idle'
     routePath.value = []
+    routeSummary.value = null
   }
+
+  // ─── 추천 API 호출 ────────────────────────────────────────────
 
   async function loadRouteRecommendations() {
     if (!origin.value || !destination.value) {
@@ -224,6 +230,7 @@ function stopNavigation() {
       selectedStation.value = null
       navigationStep.value = 'idle'
       routePath.value = []
+      routeSummary.value = null
 
       const response = await fetchRouteRecommendations({
         originLatitude: origin.value.lat,
@@ -238,11 +245,10 @@ function stopNavigation() {
 
       recommendedStations.value = mapRouteRecommendationsToGasStations(response)
 
-      const firstStation = recommendedStations.value[0]
-      if (firstStation) {
+      if (recommendedStations.value.length > 0) {
         mapCenter.value = {
-          lat: firstStation.lat,
-          lng: firstStation.lng,
+          lat: recommendedStations.value[0].lat,
+          lng: recommendedStations.value[0].lng,
         }
       } else {
         error.value = '추천 결과가 없습니다.'
@@ -256,9 +262,7 @@ function stopNavigation() {
           '선택한 출발지/도착지로 차량 경로를 찾을 수 없습니다. 다른 장소를 선택해 주세요.'
       } else {
         error.value =
-          err instanceof Error
-            ? err.message
-            : '경로 추천 정보를 불러오지 못했습니다.'
+          err instanceof Error ? err.message : '경로 추천 정보를 불러오지 못했습니다.'
       }
     } finally {
       loading.value = false
@@ -266,6 +270,7 @@ function stopNavigation() {
   }
 
   return {
+    // state
     origin,
     destination,
     recommendedStations,
@@ -276,15 +281,18 @@ function stopNavigation() {
     navigationStep,
     currentLocation,
     routePath,
+    routeSummary,
+    pageMode,
+    // actions
     setOrigin,
     setDestination,
     selectRecommendedStation,
     updateCurrentLocation,
     startNavigationToStation,
     startNavigationToDestination,
+    stopNavigation,
     clearRoutePlan,
     loadRouteRecommendations,
-    pageMode,
-    stopNavigation,
+    buildFullRoute,
   }
 })

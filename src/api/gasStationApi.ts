@@ -40,8 +40,8 @@ export async function fetchRouteRecommendations(
       Accept: 'application/json',
     },
   });
-  
-  
+
+
   console.log('route response status:', response.status, response.statusText);
 
   if (!response.ok) {
