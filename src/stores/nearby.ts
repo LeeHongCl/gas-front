@@ -6,6 +6,8 @@ import {
   fetchRouteRecommendations,
 } from '@/api/gasStationApi'
 import { mapRouteRecommendationsToGasStations } from '@/utils/mapRouteRecommendationsToGasStations'
+import { getAppCurrentLocation } from '@/utils/location'
+import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'nearby-store'
 
@@ -88,49 +90,47 @@ export const useNearbyStore = defineStore('nearby', () => {
   }
 
   async function loadRadiusStations() {
-  try {
-    loading.value = true
-    error.value = ''
-    selectedStation.value = null
+    try {
+      loading.value = true
+      error.value = ''
+      selectedStation.value = null
 
-    const testCenter = {
-      lat: 35.8596,
-      lng: 128.6232,
-    }
+      // 현재 위치 가져오기
+      const location = await getAppCurrentLocation()
+      const center = { lat: location.lat, lng: location.lng }
 
-    console.log('✅ 반경추천 테스트 좌표:', testCenter)
+      // auth store에서 연비 가져오기 (없으면 기본값 12)
+      const auth = useAuthStore()
+      const fuelEfficiency = Number(auth.profile.value.fuelEfficiency) || 12
 
-    const response = await fetchRadiusRecommendations({
-      latitude: testCenter.lat,
-      longitude: testCenter.lng,
-      radius: 3000,
-      fuelType: 'GASOLINE',
-      refuelLiters: 40,
-      fuelEfficiency: 12,
-      limit: 3,
-    })
+      const response = await fetchRadiusRecommendations({
+        latitude: center.lat,
+        longitude: center.lng,
+        radius: 3000,
+        fuelType: 'GASOLINE',
+        refuelLiters: 40,
+        fuelEfficiency,
+        limit: 3,
+      })
 
-    stations.value = mapRouteRecommendationsToGasStations(response)
-    lastSource.value = 'radius'
+      stations.value = mapRouteRecommendationsToGasStations(response)
+      lastSource.value = 'radius'
 
-    const firstStation = stations.value[0]
-    if (firstStation) {
-      mapCenter.value = {
-        lat: firstStation.lat,
-        lng: firstStation.lng,
+      const firstStation = stations.value[0]
+      if (firstStation) {
+        mapCenter.value = { lat: firstStation.lat, lng: firstStation.lng }
+      } else {
+        mapCenter.value = center
       }
-    } else {
-      mapCenter.value = testCenter
+    } catch (err) {
+      console.error(err)
+      error.value = err instanceof Error ? err.message : '반경 추천 실패'
+      stations.value = []
+      lastSource.value = 'none'
+    } finally {
+      loading.value = false
     }
-  } catch (err) {
-    console.error(err)
-    error.value = err instanceof Error ? err.message : '반경 추천 실패'
-    stations.value = []
-    lastSource.value = 'none'
-  } finally {
-    loading.value = false
   }
-}
 
  async function loadRouteStations() {
   console.log('✅ store loadRouteStations 실행됨')
