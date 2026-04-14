@@ -1,238 +1,273 @@
 <template>
   <div class="page">
     <div class="map-area">
+      <!-- 지도 -->
       <div class="map-canvas">
         <KakaoMapView
-          :stations="routeStore.recommendedStations"
-          :selected-station="routeStore.selectedStation"
-          :center="routeStore.mapCenter"
-          :route-path="routeStore.routePath"
-          :current-location="routeStore.currentLocation"
-          @select-station="routeStore.selectRecommendedStation"
+          :stations="displayStations"
+          :selected-station="selectedStation"
+          :center="mapCenter"
+          :route-path="nearbyRoutePath"
+          :current-location="currentLocation"
+          @select-station="handleSelectStation"
         />
       </div>
 
-      <!-- 🔵 추천 모드 -->
-      <template v-if="routeStore.pageMode === 'planning'">
-        <div class="top-panel">
-          <RoutePointForm
-            :origin="routeStore.origin"
-            :destination="routeStore.destination"
-            :loading="routeStore.loading"
-            @update-origin="routeStore.setOrigin"
-            @update-destination="routeStore.setDestination"
-            @search-route="routeStore.loadRouteRecommendations"
-            @clear-route="routeStore.clearRoutePlan"
-          />
+      <!-- 상단 검색 -->
+      <SearchBar v-model="keyword" @open-filter="isFilterOpen = true" />
+
+      <!-- 경로 안내 중 배너 -->
+      <Transition name="fade">
+        <div v-if="nearbyRoutePath.length > 0" class="nav-banner">
+          <span class="nav-banner-text">
+            🛣️ {{ selectedStation?.name ?? '주유소' }}까지 경로 안내 중
+          </span>
+          <button class="nav-banner-close" @click="clearNearbyRoute">종료</button>
         </div>
+      </Transition>
 
-        <StationBottomSheet
-          :stations="routeStore.recommendedStations"
-          :expanded="sheetExpanded"
-          @toggle-expand="sheetExpanded = !sheetExpanded"
-          @select-station="routeStore.selectRecommendedStation"
-        />
-      </template>
+      <!-- 플로팅 버튼 -->
+      <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
 
-      <!-- 🔴 내비 모드 -->
-      <template v-else>
-        <!-- 상단 상태 카드 -->
-        <div class="nav-top-card">
-          <div class="nav-status">
-            <span class="nav-dot" :class="routeStore.navigationStep" />
-            <strong>
-              {{
-                routeStore.navigationStep === 'to_station'
-                  ? `${routeStore.selectedStation?.name ?? '주유소'}로 이동 중`
-                  : `${routeStore.destination?.name ?? '목적지'}로 이동 중`
-              }}
-            </strong>
-          </div>
-          <p class="nav-sub">
-            {{
-              routeStore.navigationStep === 'to_station'
-                ? '주유소에 도착하면 아래 버튼을 눌러주세요'
-                : '목적지까지 안내 중입니다'
-            }}
-          </p>
-        </div>
-
-        <!-- 하단 버튼 패널 -->
-        <div class="nav-bottom-panel">
-          <!-- 주유소 → 목적지 단계 전환 버튼 (to_station 일 때만) -->
-          <button
-            v-if="routeStore.navigationStep === 'to_station'"
-            class="arrive-btn"
-            :disabled="navigatingToDestination"
-            @click="handleArrive"
-          >
-            {{ navigatingToDestination ? '경로 계산 중...' : '🚗 주유소 도착 — 목적지로 출발' }}
-          </button>
-
-          <button class="exit-nav-btn" @click="routeStore.stopNavigation()">
-            길찾기 종료
-          </button>
-        </div>
-      </template>
+      <!-- 바텀시트 -->
+      <StationBottomSheet
+        :stations="displayStations"
+        :expanded="sheetExpanded"
+        @toggle-expand="sheetExpanded = !sheetExpanded"
+        @select-station="handleSelectStation"
+      />
     </div>
 
-    <!-- 상세 시트는 추천 모드에서만 -->
+    <!-- 필터 바텀시트 -->
+    <FilterBottomSheet
+      :open="isFilterOpen"
+      :state="filterState"
+      @close="isFilterOpen = false"
+      @apply="handleApplyFilter"
+    />
+
+    <!-- 상세 시트 - nearby 모드 -->
     <StationDetailSheet
-      v-if="routeStore.pageMode === 'planning'"
-      :station="routeStore.selectedStation"
-      @close="routeStore.selectedStation = null"
+      mode="nearby"
+      :station="selectedStation"
+      @close="selectedStation = null"
+      @route-ready="handleRouteReady"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import KakaoMapView from '@/components/KakaoMapView.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import SearchBar from '@/components/SearchBar.vue'
+import FloatingButtons from '@/components/FloatingButtons.vue'
 import StationBottomSheet from '@/components/StationBottomSheet.vue'
+import FilterBottomSheet from '@/components/FilterBottomSheet.vue'
 import StationDetailSheet from '@/components/StationDetailSheet.vue'
-import RoutePointForm from '@/components/route/RoutePointForm.vue'
+import KakaoMapView from '@/components/KakaoMapView.vue'
+import { gasStations } from '@/data/gasStations'
+import { getAppCurrentLocation } from '@/utils/location'
+import { calculateDistanceInKm } from '@/utils/distance'
+import type { GasStation, StationFilterState } from '@/types/gasStation'
+import { useNearbyStore } from '@/stores/nearby'
 import { useRouteStore } from '@/stores/route'
 
+const store = useNearbyStore()
 const routeStore = useRouteStore()
-const sheetExpanded = ref(true)
-const navigatingToDestination = ref(false)
 
-async function handleArrive() {
-  navigatingToDestination.value = true
+const keyword = ref('')
+const isFilterOpen = ref(false)
+const sheetExpanded = ref(true)
+const selectedStation = ref<GasStation | null>(null)
+
+// 반경 기반 경로 상태
+const nearbyRoutePath = ref<{ lat: number; lng: number }[]>([])
+const currentLocation = ref<{ lat: number; lng: number } | null>(null)
+
+const mapCenter = ref({ lat: 35.8691, lng: 128.5945 })
+
+const filterState = ref<StationFilterState>({
+  fuelType: 'gasoline',
+  sortBy: 'recommend',
+  onlySelf: false,
+  hasCarWash: false,
+  hasStore: false,
+  radiusKm: 5,
+})
+
+const stationsWithDistance = computed(() =>
+  gasStations.map((station) => ({
+    ...station,
+    distance: calculateDistanceInKm(
+      mapCenter.value.lat,
+      mapCenter.value.lng,
+      station.lat,
+      station.lng,
+    ),
+  })),
+)
+
+const filteredStations = computed(() => {
+  const q = keyword.value.trim().toLowerCase()
+
+  let result = stationsWithDistance.value.filter((station) => {
+    const matchesKeyword =
+      !q ||
+      station.name.toLowerCase().includes(q) ||
+      station.address.toLowerCase().includes(q) ||
+      station.brand.toLowerCase().includes(q)
+    const matchesSelf = !filterState.value.onlySelf || station.isSelf
+    const matchesCarWash = !filterState.value.hasCarWash || station.hasCarWash
+    const matchesStore = !filterState.value.hasStore || station.hasStore
+    const matchesRadius = (station.distance ?? 999) <= filterState.value.radiusKm
+    return matchesKeyword && matchesSelf && matchesCarWash && matchesStore && matchesRadius
+  })
+
+  if (filterState.value.sortBy === 'distance') {
+    result = [...result].sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999))
+  } else if (filterState.value.sortBy === 'price') {
+    result = [...result].sort((a, b) => {
+      const aPrice = filterState.value.fuelType === 'gasoline' ? a.gasolinePrice : a.dieselPrice
+      const bPrice = filterState.value.fuelType === 'gasoline' ? b.gasolinePrice : b.dieselPrice
+      return aPrice - bPrice
+    })
+  } else {
+    result = [...result].sort((a, b) => {
+      const aScore = (a.favorite ? 2 : 0) + (a.isSelf ? 1 : 0) - (a.distance ?? 0)
+      const bScore = (b.favorite ? 2 : 0) + (b.isSelf ? 1 : 0) - (b.distance ?? 0)
+      return bScore - aScore
+    })
+  }
+
+  return result
+})
+
+const displayStations = computed(() => {
+  if (store.lastSource !== 'none' && store.stations.length > 0) return store.stations
+  return filteredStations.value
+})
+
+function handleApplyFilter(nextState: StationFilterState) {
+  filterState.value = nextState
+  isFilterOpen.value = false
+}
+
+async function updateCurrentLocation() {
   try {
-    await routeStore.startNavigationToDestination()
-  } finally {
-    navigatingToDestination.value = false
+    const location = await getAppCurrentLocation()
+    mapCenter.value = { lat: location.lat, lng: location.lng }
+    currentLocation.value = { lat: location.lat, lng: location.lng }
+    routeStore.updateCurrentLocation(location.lat, location.lng)
+  } catch (error) {
+    console.error('현재 위치를 가져오지 못했습니다.', error)
   }
 }
 
-let watchId: number | null = null
+function handleRecenter() {
+  updateCurrentLocation()
+}
+
+function handleResearch() {
+  console.log('현재 지도 중심 기준으로 재검색')
+}
+
+function handleSelectStation(station: GasStation) {
+  if (selectedStation.value?.id !== station.id) {
+    nearbyRoutePath.value = []
+  }
+  selectedStation.value = station
+}
+
+// StationDetailSheet에서 경로 계산 완료 시 호출
+function handleRouteReady(path: { lat: number; lng: number }[]) {
+  nearbyRoutePath.value = path
+  selectedStation.value = null
+}
+
+function clearNearbyRoute() {
+  nearbyRoutePath.value = []
+  routeStore.clearRoutePlan()
+}
+
+watch(
+  () => store.selectedStation,
+  (nextStation) => {
+    if (nextStation) selectedStation.value = nextStation
+  },
+)
+
+watch(
+  () => store.mapCenter,
+  (nextCenter) => {
+    if (store.lastSource !== 'none') {
+      mapCenter.value = { lat: nextCenter.lat, lng: nextCenter.lng }
+    }
+  },
+  { deep: true },
+)
 
 onMounted(() => {
-  if (!navigator.geolocation) return
-
-  watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      routeStore.updateCurrentLocation(pos.coords.latitude, pos.coords.longitude)
-    },
-    (err) => {
-      console.error(err)
-    },
-  )
-})
-
-onUnmounted(() => {
-  if (watchId !== null) {
-    navigator.geolocation.clearWatch(watchId)
-  }
+  updateCurrentLocation()
 })
 </script>
 
 <style scoped>
-.page {
-  min-height: 100dvh;
-}
+.page { min-height: 100dvh; }
 
 .map-area {
   position: relative;
   height: calc(100dvh - 82px);
   overflow: hidden;
+  background: #dbeafe;
 }
 
 .map-canvas {
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
-/* 🔵 추천 UI */
-.top-panel {
+.nav-banner {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
-  z-index: 30;
-}
-
-/* 🔴 내비 UI */
-.nav-top-card {
-  position: absolute;
-  top: 16px;
+  top: calc(14px + env(safe-area-inset-top));
   left: 16px;
   right: 16px;
   z-index: 40;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: white;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.1);
-}
-
-.nav-status {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #1d4ed8;
+  color: white;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
 }
 
-.nav-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.nav-banner-text {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nav-banner-close {
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
   flex-shrink: 0;
 }
 
-.nav-dot.to_station {
-  background: #2563eb;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.nav-dot.to_destination {
-  background: #16a34a;
-}
-
-.nav-status strong {
-  font-size: 16px;
-}
-
-.nav-sub {
-  margin: 8px 0 0 20px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.nav-bottom-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 16px;
-  right: 16px;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.arrive-btn {
-  width: 100%;
-  height: 52px;
-  border: 0;
-  border-radius: 14px;
-  background: #2563eb;
-  color: white;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.arrive-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.exit-nav-btn {
-  width: 100%;
-  height: 48px;
-  border: 0;
-  border-radius: 14px;
-  background: #111827;
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <div class="map-area">
-      <!-- 지도 레이어 -->
+      <!-- 지도 -->
       <div class="map-canvas">
         <KakaoMapView
           :stations="displayStations"
@@ -16,10 +16,7 @@
       <!-- 상단 검색 -->
       <SearchBar v-model="keyword" @open-filter="isFilterOpen = true" />
 
-      <!-- 플로팅 버튼 -->
-      <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
-
-      <!-- 경로 안내 중 상단 배너 -->
+      <!-- 경로 안내 중 배너 -->
       <Transition name="fade">
         <div v-if="nearbyRoutePath.length > 0" class="nav-banner">
           <span class="nav-banner-text">
@@ -28,6 +25,9 @@
           <button class="nav-banner-close" @click="clearNearbyRoute">종료</button>
         </div>
       </Transition>
+
+      <!-- 플로팅 버튼 -->
+      <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
 
       <!-- 바텀시트 -->
       <StationBottomSheet
@@ -46,7 +46,7 @@
       @apply="handleApplyFilter"
     />
 
-    <!-- 상세 시트 — nearby 모드 -->
+    <!-- 상세 시트 - nearby 모드 -->
     <StationDetailSheet
       mode="nearby"
       :station="selectedStation"
@@ -66,10 +66,10 @@ import StationDetailSheet from '@/components/StationDetailSheet.vue'
 import KakaoMapView from '@/components/KakaoMapView.vue'
 import { gasStations } from '@/data/gasStations'
 import { getAppCurrentLocation } from '@/utils/location'
+import { calculateDistanceInKm } from '@/utils/distance'
 import type { GasStation, StationFilterState } from '@/types/gasStation'
 import { useNearbyStore } from '@/stores/nearby'
 import { useRouteStore } from '@/stores/route'
-import { calculateDistanceInKm } from '@/utils/distance'
 
 const store = useNearbyStore()
 const routeStore = useRouteStore()
@@ -79,14 +79,11 @@ const isFilterOpen = ref(false)
 const sheetExpanded = ref(true)
 const selectedStation = ref<GasStation | null>(null)
 
-// 반경 기반 경로 (현재 위치 → 주유소)
+// 반경 기반 경로 상태
 const nearbyRoutePath = ref<{ lat: number; lng: number }[]>([])
 const currentLocation = ref<{ lat: number; lng: number } | null>(null)
 
-const mapCenter = ref({
-  lat: 35.8691,
-  lng: 128.5945,
-})
+const mapCenter = ref({ lat: 35.8691, lng: 128.5945 })
 
 const filterState = ref<StationFilterState>({
   fuelType: 'gasoline',
@@ -97,8 +94,8 @@ const filterState = ref<StationFilterState>({
   radiusKm: 5,
 })
 
-const stationsWithDistance = computed(() => {
-  return gasStations.map((station) => ({
+const stationsWithDistance = computed(() =>
+  gasStations.map((station) => ({
     ...station,
     distance: calculateDistanceInKm(
       mapCenter.value.lat,
@@ -106,8 +103,8 @@ const stationsWithDistance = computed(() => {
       station.lat,
       station.lng,
     ),
-  }))
-})
+  })),
+)
 
 const filteredStations = computed(() => {
   const q = keyword.value.trim().toLowerCase()
@@ -118,12 +115,10 @@ const filteredStations = computed(() => {
       station.name.toLowerCase().includes(q) ||
       station.address.toLowerCase().includes(q) ||
       station.brand.toLowerCase().includes(q)
-
     const matchesSelf = !filterState.value.onlySelf || station.isSelf
     const matchesCarWash = !filterState.value.hasCarWash || station.hasCarWash
     const matchesStore = !filterState.value.hasStore || station.hasStore
     const matchesRadius = (station.distance ?? 999) <= filterState.value.radiusKm
-
     return matchesKeyword && matchesSelf && matchesCarWash && matchesStore && matchesRadius
   })
 
@@ -161,8 +156,6 @@ async function updateCurrentLocation() {
     const location = await getAppCurrentLocation()
     mapCenter.value = { lat: location.lat, lng: location.lng }
     currentLocation.value = { lat: location.lat, lng: location.lng }
-
-    // routeStore에도 현재 위치 업데이트 (경로 계산에 사용)
     routeStore.updateCurrentLocation(location.lat, location.lng)
   } catch (error) {
     console.error('현재 위치를 가져오지 못했습니다.', error)
@@ -178,21 +171,18 @@ function handleResearch() {
 }
 
 function handleSelectStation(station: GasStation) {
-  // 다른 주유소 선택 시 이전 경로 초기화
   if (selectedStation.value?.id !== station.id) {
     nearbyRoutePath.value = []
   }
   selectedStation.value = station
 }
 
-/** StationDetailSheet에서 경로 계산 완료 후 호출 */
+// StationDetailSheet에서 경로 계산 완료 시 호출
 function handleRouteReady(path: { lat: number; lng: number }[]) {
   nearbyRoutePath.value = path
-  // 시트 닫기
   selectedStation.value = null
 }
 
-/** 경로 안내 종료 */
 function clearNearbyRoute() {
   nearbyRoutePath.value = []
   routeStore.clearRoutePlan()
@@ -221,9 +211,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100dvh;
-}
+.page { min-height: 100dvh; }
 
 .map-area {
   position: relative;
@@ -238,7 +226,6 @@ onMounted(() => {
   z-index: 1;
 }
 
-/* 경로 안내 배너 */
 .nav-banner {
   position: absolute;
   top: calc(14px + env(safe-area-inset-top));
@@ -271,14 +258,8 @@ onMounted(() => {
   padding: 6px 12px;
   cursor: pointer;
   flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.nav-banner-close:active {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* 배너 트랜지션 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
