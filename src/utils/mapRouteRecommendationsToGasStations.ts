@@ -17,6 +17,6 @@ export function mapRouteRecommendationsToGasStations(
     isSelf: false,
     hasCarWash: false,
     hasStore: false,
-    distance: item.distance,
+    distance: item.distance / 1000, // API는 meter 단위, GasStation은 km 단위
   }));
 }
