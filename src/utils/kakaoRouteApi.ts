@@ -7,6 +7,8 @@
  * prod: Vercel rewrites 또는 백엔드 프록시가 필요합니다.
  */
 
+// window.kakao 타입은 kakaoPlaceSearch.ts에서 전역 선언됨
+
 export interface LatLng {
   lat: number
   lng: number

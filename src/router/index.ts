@@ -9,7 +9,6 @@ import NearbyPage from '@/pages/NearbyPage.vue'
 import FavoritesPage from '@/pages/FavoritesPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import MyInfoPage from '@/pages/MyInfoPage.vue'
-import RouteRecommendationPage from '@/pages/RouteRecommendationPage.vue'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -26,7 +25,6 @@ const router = createRouter({
       component: InitialProfilePage,
       meta: { requiresAuth: true },
     },
-
     {
       path: '/app',
       component: AppLayout,
@@ -34,7 +32,11 @@ const router = createRouter({
       children: [
         { path: '', name: 'home', component: HomePage },
         { path: 'nearby', name: 'nearby', component: NearbyPage },
-        { path: 'route', name: 'route', component: RouteRecommendationPage },
+        {
+          path: 'route',
+          name: 'route',
+          component: () => import('@/pages/RouteRecommendationPage.vue'),
+        },
         { path: 'favorites', name: 'favorites', component: FavoritesPage },
         { path: 'settings', name: 'settings', component: SettingsPage },
         { path: 'my-info', name: 'my-info', component: MyInfoPage },
@@ -45,37 +47,18 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+
+  const loggedIn = auth.isLoggedIn.value
+  const profileDone = auth.hasCompletedInitialProfile.value
+
+  const needsAuth = to.matched.some((record) => record.meta.requiresAuth)
   const isAuthPage = ['/welcome', '/login', '/signup'].includes(to.path)
   const isInitialProfilePage = to.path === '/initial-profile'
-  const needsAuth = to.matched.some((record) => record.meta.requiresAuth)
 
-  if (needsAuth && !auth.isLoggedIn.value) {
-    return '/welcome'
-  }
-
-  if (
-    auth.isLoggedIn.value &&
-    !auth.hasCompletedInitialProfile.value &&
-    !isInitialProfilePage
-  ) {
-    return '/initial-profile'
-  }
-
-  if (
-    auth.isLoggedIn.value &&
-    auth.hasCompletedInitialProfile.value &&
-    isInitialProfilePage
-  ) {
-    return '/app'
-  }
-
-  if (
-    auth.isLoggedIn.value &&
-    auth.hasCompletedInitialProfile.value &&
-    isAuthPage
-  ) {
-    return '/app'
-  }
+  if (needsAuth && !loggedIn) return '/welcome'
+  if (loggedIn && !profileDone && !isInitialProfilePage) return '/initial-profile'
+  if (loggedIn && profileDone && isInitialProfilePage) return '/app'
+  if (loggedIn && profileDone && isAuthPage) return '/app'
 
   return true
 })

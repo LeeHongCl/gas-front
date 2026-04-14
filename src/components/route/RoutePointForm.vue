@@ -163,8 +163,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { RoutePoint } from '@/stores/route'
-import { searchKakaoPlaces, type KakaoPlaceResult } from '@/utils/kakaoPlaceSearch'
-import { geocodeAddress } from '@/utils/kakaoGeocode'
+import { searchKakaoPlaces, geocodeAddress, type KakaoPlaceResult } from '@/utils/kakaoPlaceSearch'
 import { getAppCurrentLocation } from '@/utils/location'
 
 const props = defineProps<{

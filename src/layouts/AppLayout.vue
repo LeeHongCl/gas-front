@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
     <main class="app-main">
-      <RouterView />
+      <RouterView :key="$route.path" />
     </main>
 
     <BottomTabBar />

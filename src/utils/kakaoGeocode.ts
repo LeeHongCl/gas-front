@@ -4,11 +4,7 @@
  * 외부에서 직접 호출할 수 있도록 독립 유틸로 분리했습니다.
  */
 
-declare global {
-  interface Window {
-    kakao: any
-  }
-}
+// window.kakao 타입은 kakaoPlaceSearch.ts에서 전역 선언됨
 
 export interface GeocodedResult {
   lat: number
