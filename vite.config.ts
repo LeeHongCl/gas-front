@@ -22,6 +22,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/kakao-navi/, ''),
       },
+      '/api': {
+        target: 'http://43.203.29.58:8080',
+        changeOrigin: true,
+      },
     },
   },
 })
