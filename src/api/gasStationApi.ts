@@ -31,7 +31,7 @@ export async function fetchRouteRecommendations(
     limit: String(safeLimit),
   });
 
-  const url = `${BASE_URL}/api/gas-stations/recommendations/route?${searchParams.toString()}`;
+  const url = `${BASE_URL}gas-stations/recommendations/route?${searchParams.toString()}`;
   console.log('route request url:', url);
 
   const response = await fetch(url, {
@@ -83,7 +83,7 @@ export async function fetchRadiusRecommendations(
     limit: String(safeLimit),
   });
 
-  const url = `${BASE_URL}/api/gas-stations/recommendations/radius?${searchParams.toString()}`;
+  const url = `${BASE_URL}gas-stations/recommendations/radius?${searchParams.toString()}`;
   console.log('radius request url:', url);
 
   const response = await fetch(url, {
