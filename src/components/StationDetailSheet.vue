@@ -88,16 +88,21 @@
   )
 
 
-  function handleStartNavigation() {
-    if (!props.station) return
+   function handleStartNavigation() {                                                                                                                           if (!props.station) return
 
     const { name, lat, lng } = props.station
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
     const kakao = window.Kakao
 
+    // 카카오내비 앱으로 이동 전 브라우저 기본 확인창
+    const destination = props.mode === 'route' ? routeStore.destination : null
+    const message = props.mode === 'route' && destination
+      ? `카카오내비로 이동합니다.\n\n경유: ${name}\n목적지: ${destination.name}`
+      : `카카오내비로 이동합니다.\n\n목적지: ${name}`
+
+    if (!confirm(message)) return  // 취소하면 중단
+
     if (!kakao?.Navi || !isMobile) {
-      // PC 또는 SDK 미로드: 카카오맵 웹으로 fallback
-      const destination = props.mode === 'route' ? routeStore.destination : null
       const target = destination
         ? `${encodeURIComponent(destination.name)},${destination.lat},${destination.lng}`
         : `${encodeURIComponent(name)},${lat},${lng}`
@@ -105,10 +110,7 @@
       return
     }
 
-    if (props.mode === 'route') {
-      const destination = routeStore.destination
-      if (!destination) return
-
+    if (props.mode === 'route' && destination) {
       kakao.Navi.start({
         name: destination.name,
         x: destination.lng,
@@ -117,12 +119,7 @@
         viaPoints: [{ name, x: lng, y: lat }],
       })
     } else {
-      kakao.Navi.start({
-        name,
-        x: lng,
-        y: lat,
-        coordType: 'wgs84',
-      })
+      kakao.Navi.start({ name, x: lng, y: lat, coordType: 'wgs84' })
     }
   }
 
