@@ -9,38 +9,52 @@
           <div class="header-info">
             <p class="brand-label">{{ station.brand }}</p>
             <h2 class="station-name">{{ station.name }}</h2>
-            <p v-if="station.address" class="address">{{ station.address }}</p>
+            <p v-if="station.address" class="address">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              {{ station.address }}
+            </p>
           </div>
-          <button type="button" class="close-btn" @click="$emit('close')">✕</button>
+          <button type="button" class="close-btn" aria-label="닫기" @click="$emit('close')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <!-- 거리 뱃지 -->
         <div v-if="station.distance != null" class="distance-badge">
-          📍 {{ formatDistance(station.distance) }} 거리
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          </svg>
+          {{ formatDistance(station.distance) }} 거리
         </div>
 
         <!-- 가격 -->
         <div class="price-grid">
           <div class="price-box gasoline">
             <span class="price-label">휘발유</span>
-            <strong class="price-value">{{ station.gasolinePrice.toLocaleString() }}<em>원</em></strong>
+            <strong class="price-value">{{ station.gasolinePrice.toLocaleString() }}<em>원/L</em></strong>
           </div>
           <div class="price-box diesel">
             <span class="price-label">경유</span>
-            <strong class="price-value">{{ station.dieselPrice.toLocaleString() }}<em>원</em></strong>
+            <strong class="price-value">{{ station.dieselPrice.toLocaleString() }}<em>원/L</em></strong>
           </div>
         </div>
 
         <!-- 태그 -->
         <div v-if="hasTags" class="tag-row">
           <span v-if="station.isSelf" class="tag self">셀프</span>
-          <span v-if="station.hasCarWash" class="tag wash">세차 가능</span>
-          <span v-if="station.hasStore" class="tag store">편의점 있음</span>
+          <span v-if="station.hasCarWash" class="tag wash">세차</span>
+          <span v-if="station.hasStore" class="tag store">편의점</span>
         </div>
 
         <!-- 전화번호 -->
         <div v-if="station.tel" class="info-row">
-          <span class="info-icon">📞</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
           <span>{{ station.tel }}</span>
         </div>
 
@@ -52,7 +66,10 @@
             :href="station.tel ? `tel:${station.tel}` : undefined"
             @click.stop
           >
-            📞 전화
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            전화
           </a>
           <button
             type="button"
@@ -60,7 +77,11 @@
             :disabled="navigating"
             @click.stop.prevent="handleStartNavigation"
           >
-            {{ navigating ? '경로 계산 중...' : '🛣️ 길찾기' }}
+            <svg v-if="!navigating" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span class="btn-spinner" v-else />
+            {{ navigating ? '경로 계산 중...' : '길찾기' }}
           </button>
         </div>
       </section>
@@ -75,20 +96,14 @@ import { useRouteStore } from '@/stores/route'
 
 const routeStore = useRouteStore()
 
-const props = defineProps<{
-  station: GasStation | null
-}>()
+const props = defineProps<{ station: GasStation | null }>()
 
-defineEmits<{
-  (e: 'close'): void
-}>()
+defineEmits<{ (e: 'close'): void }>()
 
 const navigating = ref(false)
 
 const hasTags = computed(
-  () =>
-    props.station &&
-    (props.station.isSelf || props.station.hasCarWash || props.station.hasStore),
+  () => props.station && (props.station.isSelf || props.station.hasCarWash || props.station.hasStore),
 )
 
 async function handleStartNavigation() {
@@ -112,16 +127,19 @@ function formatDistance(distance?: number) {
 <style scoped>
 .sheet-enter-active,
 .sheet-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
+
 .sheet-enter-active .detail-sheet,
 .sheet-leave-active .detail-sheet {
-  transition: transform 0.25s ease;
+  transition: transform var(--transition-slow);
 }
+
 .sheet-enter-from,
 .sheet-leave-to {
   opacity: 0;
 }
+
 .sheet-enter-from .detail-sheet,
 .sheet-leave-to .detail-sheet {
   transform: translateY(100%);
@@ -133,23 +151,23 @@ function formatDistance(distance?: number) {
   z-index: 90;
   display: flex;
   align-items: flex-end;
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .detail-sheet {
   width: 100%;
-  padding: 0 16px calc(28px + env(safe-area-inset-bottom));
-  border-top-left-radius: 28px;
-  border-top-right-radius: 28px;
+  padding: 0 20px calc(28px + env(safe-area-inset-bottom));
+  border-top-left-radius: var(--radius-2xl);
+  border-top-right-radius: var(--radius-2xl);
   background: white;
 }
 
 .handle {
   width: 44px;
   height: 4px;
-  border-radius: 999px;
-  background: #d1d5db;
-  margin: 12px auto 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-200);
+  margin: 12px auto 18px;
 }
 
 .header-row {
@@ -162,50 +180,55 @@ function formatDistance(distance?: number) {
 .header-info { flex: 1; min-width: 0; }
 
 .brand-label {
-  margin: 0 0 2px;
+  margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   letter-spacing: 0.3px;
 }
 
 .station-name {
   margin: 0;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1.2;
+  letter-spacing: -0.4px;
 }
 
 .address {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-gray-500);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .close-btn {
+  width: 36px;
+  height: 36px;
   border: 0;
-  background: #f3f4f6;
-  color: #6b7280;
-  width: 34px;
-  height: 34px;
   border-radius: 50%;
-  font-size: 13px;
-  font-weight: 800;
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  cursor: pointer;
-  margin-top: 2px;
+  transition: background var(--transition-fast);
+}
+
+.close-btn:active {
+  background: var(--color-gray-200);
 }
 
 .distance-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 12px;
+  gap: 5px;
+  margin-top: 14px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: #f0f9ff;
   color: #0369a1;
   font-size: 13px;
@@ -220,7 +243,7 @@ function formatDistance(distance?: number) {
 }
 
 .price-box {
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 14px;
 }
 
@@ -231,81 +254,86 @@ function formatDistance(distance?: number) {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-gray-500);
   margin-bottom: 6px;
 }
 
 .price-value {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .price-value em {
-  font-size: 13px;
+  font-size: 11px;
   font-style: normal;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-gray-400);
   margin-left: 2px;
 }
 
 .tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-top: 14px;
 }
 
 .tag {
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 700;
 }
 
-.tag.self   { background: #eff6ff; color: #1d4ed8; }
-.tag.wash   { background: #f0f9ff; color: #0369a1; }
-.tag.store  { background: #fdf4ff; color: #7e22ce; }
+.tag.self  { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.tag.wash  { background: #f0f9ff; color: #0369a1; }
+.tag.store { background: #fdf4ff; color: #7e22ce; }
 
 .info-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fafc;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
   font-size: 14px;
-  color: #374151;
+  color: var(--color-gray-700);
+}
+
+.info-row svg {
+  color: var(--color-gray-400);
+  flex-shrink: 0;
 }
 
 .action-row {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 2.5fr;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 
 .action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   height: 56px;
   border: 0;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
   text-decoration: none;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
 .action-btn:active { transform: scale(0.97); }
 
 .action-btn.secondary {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--color-gray-100);
+  color: var(--color-gray-800);
 }
 
 .action-btn.secondary.disabled {
@@ -314,12 +342,26 @@ function formatDistance(distance?: number) {
 }
 
 .action-btn.primary {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
+  box-shadow: var(--shadow-blue);
 }
 
 .action-btn.primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

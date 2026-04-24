@@ -49,9 +49,18 @@
           </div>
 
           <div v-if="routeStore.routeSummary" class="nav-summary">
-            <span class="summary-item">🛣️ {{ formatDistance(routeStore.routeSummary.distanceM) }}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="6" cy="19" r="2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="18" cy="5" r="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M6 17V9a6 6 0 016-6h0M18 7v8a6 6 0 01-6 6h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="summary-item">{{ formatDistance(routeStore.routeSummary.distanceM) }}</span>
             <span class="summary-divider">·</span>
-            <span class="summary-item">⏱️ {{ formatDuration(routeStore.routeSummary.durationSec) }}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="summary-item">{{ formatDuration(routeStore.routeSummary.durationSec) }}</span>
           </div>
 
           <p class="nav-sub">
@@ -70,7 +79,7 @@
             :disabled="navigatingToDestination"
             @click="handleArrive"
           >
-            {{ navigatingToDestination ? '경로 계산 중...' : '🚗 주유소 도착 — 목적지로 출발' }}
+            {{ navigatingToDestination ? '경로 계산 중...' : '주유소 도착 — 목적지로 출발' }}
           </button>
 
           <button class="exit-nav-btn" @click="routeStore.stopNavigation()">
@@ -144,7 +153,7 @@ onUnmounted(() => {
 
 .map-area {
   position: relative;
-  height: calc(100dvh - 82px);
+  height: calc(100dvh - 78px);
   overflow: hidden;
 }
 
@@ -165,9 +174,9 @@ onUnmounted(() => {
   right: 16px;
   z-index: 40;
   padding: 16px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: white;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+  box-shadow: var(--shadow-lg);
 }
 
 .nav-status {
@@ -183,8 +192,8 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.nav-dot.to_station     { background: #2563eb; }
-.nav-dot.to_destination { background: #16a34a; }
+.nav-dot.to_station     { background: var(--color-primary); }
+.nav-dot.to_destination { background: var(--color-success); }
 
 .nav-title { font-size: 16px; font-weight: 800; }
 
@@ -193,18 +202,18 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
 }
 
-.summary-item { font-size: 13px; font-weight: 700; color: #374151; }
-.summary-divider { color: #d1d5db; }
+.summary-item { font-size: 13px; font-weight: 700; color: var(--color-gray-700); }
+.summary-divider { color: var(--color-gray-300); }
 
 .nav-sub {
   margin: 8px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-gray-500);
 }
 
 .nav-bottom-panel {
@@ -220,16 +229,15 @@ onUnmounted(() => {
 
 .arrive-btn {
   width: 100%;
-  height: 54px;
+  height: 56px;
   border: 0;
-  border-radius: 16px;
-  background: #2563eb;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
   color: white;
   font-size: 15px;
   font-weight: 800;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: var(--shadow-blue);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .arrive-btn:active   { transform: scale(0.98); }
@@ -239,13 +247,12 @@ onUnmounted(() => {
   width: 100%;
   height: 50px;
   border: 0;
-  border-radius: 16px;
-  background: #111827;
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-900);
   color: white;
   font-size: 15px;
   font-weight: 800;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--transition-fast);
 }
 
 .exit-nav-btn:active { opacity: 0.8; }

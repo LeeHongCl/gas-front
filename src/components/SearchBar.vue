@@ -1,7 +1,10 @@
 <template>
   <div class="search-wrap">
     <div class="search-box" :class="{ focused }">
-      <span class="icon">🔍</span>
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       <input
         ref="inputRef"
         :value="modelValue"
@@ -12,16 +15,26 @@
         @focus="focused = true"
         @blur="focused = false"
       />
-      <!-- 입력값 있을 때만 X 버튼 -->
       <button
         v-if="modelValue"
         class="clear-btn"
+        aria-label="검색어 지우기"
         @click="$emit('update:modelValue', '')"
       >
-        ✕
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
       </button>
       <div class="divider" />
-      <button class="filter-button" :class="{ 'has-filter': hasFilter }" @click="$emit('open-filter')">
+      <button
+        class="filter-button"
+        :class="{ 'has-filter': hasFilter }"
+        aria-label="필터"
+        @click="$emit('open-filter')"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
         <span>필터</span>
         <span v-if="hasFilter" class="filter-dot" />
       </button>
@@ -34,7 +47,7 @@ import { ref } from 'vue'
 
 defineProps<{
   modelValue: string
-  hasFilter?: boolean  // 필터 적용 중일 때 점 표시
+  hasFilter?: boolean
 }>()
 
 defineEmits<{
@@ -59,24 +72,30 @@ const inputRef = ref<HTMLInputElement | null>(null)
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 18px;
+  padding: 0 12px;
+  height: 52px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.10);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1.5px solid transparent;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .search-box.focused {
   border-color: #bfdbfe;
-  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.14);
 }
 
-.icon {
-  font-size: 15px;
+.search-icon {
+  color: var(--color-gray-400);
   flex-shrink: 0;
+  transition: color var(--transition-base);
+}
+
+.search-box.focused .search-icon {
+  color: var(--color-primary);
 }
 
 .search-input {
@@ -86,34 +105,35 @@ const inputRef = ref<HTMLInputElement | null>(null)
   outline: none;
   background: transparent;
   font-size: 15px;
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .search-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-gray-300);
 }
 
 .clear-btn {
   border: 0;
-  background: #e5e7eb;
-  color: #6b7280;
+  background: var(--color-gray-200);
+  color: var(--color-gray-500);
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  font-size: 10px;
-  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
+}
+
+.clear-btn:active {
+  background: var(--color-gray-300);
 }
 
 .divider {
   width: 1px;
   height: 18px;
-  background: #e5e7eb;
+  background: var(--color-gray-200);
   flex-shrink: 0;
 }
 
@@ -121,22 +141,21 @@ const inputRef = ref<HTMLInputElement | null>(null)
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   border: 0;
-  border-radius: 12px;
-  background: #eff6ff;
-  color: #2563eb;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-size: 13px;
-  font-weight: 700;
-  padding: 8px 12px;
+  font-weight: 800;
+  padding: 6px 10px;
   white-space: nowrap;
   flex-shrink: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .filter-button.has-filter {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
 }
 

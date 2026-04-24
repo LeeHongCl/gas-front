@@ -22,7 +22,7 @@
             :class="{ active: originMode === 'current' }"
             @click="setCurrentLocation"
           >
-            {{ gettingLocation ? '위치 가져오는 중...' : '📍 현재 위치' }}
+            {{ gettingLocation ? '위치 확인 중...' : '현재 위치' }}
           </button>
         </div>
       </div>
@@ -71,9 +71,17 @@
 
       <!-- 선택 완료 표시 -->
       <div v-if="origin" class="selected-badge">
-        <span class="selected-icon">✓</span>
+        <span class="selected-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <span class="selected-name">{{ origin.name }}</span>
-        <button class="selected-clear" @click="clearOrigin">✕</button>
+        <button class="selected-clear" @click="clearOrigin">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -139,9 +147,17 @@
 
       <!-- 선택 완료 표시 -->
       <div v-if="destination" class="selected-badge">
-        <span class="selected-icon">✓</span>
+        <span class="selected-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <span class="selected-name">{{ destination.name }}</span>
-        <button class="selected-clear" @click="clearDestination">✕</button>
+        <button class="selected-clear" @click="clearDestination">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -319,9 +335,11 @@ function clearAll() {
   display: grid;
   gap: 14px;
   padding: 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .field-group {
@@ -339,11 +357,10 @@ function clearAll() {
 .field-label {
   font-size: 14px;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-gray-900);
   flex-shrink: 0;
 }
 
-/* 입력 방식 탭 */
 .mode-tabs {
   display: flex;
   gap: 4px;
@@ -351,24 +368,22 @@ function clearAll() {
 
 .mode-tab {
   border: 0;
-  border-radius: 8px;
-  background: #f3f4f6;
-  color: #6b7280;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
   font-size: 11px;
   font-weight: 700;
   padding: 5px 8px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .mode-tab.active {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
 }
 
-/* 입력 행 */
 .field-row {
   display: flex;
   gap: 8px;
@@ -376,32 +391,37 @@ function clearAll() {
 
 .field-input {
   flex: 1;
-  height: 42px;
+  height: 44px;
   padding: 0 12px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
   background: white;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-base);
+  color: var(--color-gray-900);
+}
+
+.field-input::placeholder {
+  color: var(--color-gray-300);
 }
 
 .field-input:focus {
-  border-color: #93c5fd;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .field-btn {
-  min-width: 60px;
-  height: 42px;
+  min-width: 64px;
+  height: 44px;
   border: 0;
-  border-radius: 12px;
-  background: #e5e7eb;
-  color: #374151;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-200);
+  color: var(--color-gray-700);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.12s;
-  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
 }
 
 .field-btn:disabled {
@@ -410,10 +430,9 @@ function clearAll() {
 }
 
 .field-btn:not(:disabled):active {
-  background: #d1d5db;
+  background: var(--color-gray-300);
 }
 
-/* 검색 결과 리스트 */
 .result-list {
   display: grid;
   gap: 6px;
@@ -426,13 +445,12 @@ function clearAll() {
   display: grid;
   gap: 2px;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
   background: white;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s;
-  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
 }
 
 .result-item:active {
@@ -441,62 +459,74 @@ function clearAll() {
 
 .result-item strong {
   font-size: 14px;
-  color: #111827;
+  color: var(--color-gray-900);
+  font-weight: 700;
 }
 
 .result-item span {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-gray-400);
 }
 
-/* 선택 완료 뱃지 */
 .selected-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #eff6ff;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
 }
 
 .selected-icon {
-  font-size: 13px;
-  font-weight: 800;
-  color: #2563eb;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .selected-name {
   flex: 1;
   font-size: 13px;
   font-weight: 700;
-  color: #1d4ed8;
+  color: var(--color-primary-dark);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .selected-clear {
+  width: 22px;
+  height: 22px;
   border: 0;
-  background: transparent;
-  color: #93c5fd;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  padding: 0 2px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
 
-/* 에러 */
 .error-text {
   margin: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #dc2626;
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* 액션 버튼 */
 .actions {
   display: flex;
   gap: 8px;
@@ -506,19 +536,19 @@ function clearAll() {
 .primary-btn,
 .secondary-btn {
   flex: 1;
-  height: 46px;
+  height: 48px;
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
-  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .primary-btn {
-  background: #111827;
+  background: var(--color-primary);
   color: white;
+  box-shadow: var(--shadow-blue);
 }
 
 .primary-btn:disabled {
@@ -531,11 +561,11 @@ function clearAll() {
 }
 
 .secondary-btn {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
 }
 
 .secondary-btn:active {
-  background: #e5e7eb;
+  background: var(--color-gray-200);
 }
 </style>

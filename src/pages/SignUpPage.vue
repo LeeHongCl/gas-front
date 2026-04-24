@@ -1,33 +1,108 @@
 <template>
   <div class="auth-page">
-    <AppHeader title="회원가입" subtitle="기본 계정을 먼저 만들어주세요" showBack />
+    <div class="auth-header">
+      <button class="back-btn" aria-label="뒤로" @click="router.back()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
 
-    <section class="form-card">
-      <label class="field">
-        <span>이름</span>
-        <input v-model="name" type="text" placeholder="이름 입력" />
-      </label>
+    <div class="auth-content">
+      <div class="auth-title-wrap">
+        <h1 class="auth-title">회원가입</h1>
+        <p class="auth-subtitle">기본 정보를 입력해 주세요</p>
+      </div>
 
-      <label class="field">
-        <span>이메일</span>
-        <input v-model="email" type="email" placeholder="example@email.com" />
-      </label>
+      <div class="form-wrap">
+        <label class="field" :class="{ focused: nameFocused }">
+          <span class="field-label">이름</span>
+          <div class="input-wrap">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input
+              v-model="name"
+              type="text"
+              placeholder="이름 입력"
+              autocomplete="name"
+              @focus="nameFocused = true"
+              @blur="nameFocused = false"
+            />
+          </div>
+        </label>
 
-      <label class="field">
-        <span>비밀번호</span>
-        <input v-model="password" type="password" placeholder="비밀번호 입력" />
-      </label>
+        <label class="field" :class="{ focused: emailFocused }">
+          <span class="field-label">이메일</span>
+          <div class="input-wrap">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 8l10 6 10-6" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <input
+              v-model="email"
+              type="email"
+              placeholder="example@email.com"
+              autocomplete="email"
+              @focus="emailFocused = true"
+              @blur="emailFocused = false"
+            />
+          </div>
+        </label>
 
-      <button class="primary-btn" @click="handleSignUp">회원가입 완료</button>
-      <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
-    </section>
+        <label class="field" :class="{ focused: pwFocused }">
+          <span class="field-label">비밀번호</span>
+          <div class="input-wrap">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input
+              v-model="password"
+              :type="showPw ? 'text' : 'password'"
+              placeholder="6자 이상 입력"
+              autocomplete="new-password"
+              @focus="pwFocused = true"
+              @blur="pwFocused = false"
+            />
+            <button type="button" class="pw-toggle" @click="showPw = !showPw" tabindex="-1">
+              <svg v-if="showPw" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </label>
+
+        <Transition name="slide-err">
+          <p v-if="errorMessage" class="error-text">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            {{ errorMessage }}
+          </p>
+        </Transition>
+
+        <button class="primary-btn" @click="handleSignUp">회원가입 완료</button>
+
+        <RouterLink to="/login" class="text-link">
+          이미 계정이 있으신가요? <strong>로그인</strong>
+        </RouterLink>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import AppHeader from '@/components/AppHeader.vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -37,6 +112,10 @@ const name = ref('')
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const showPw = ref(false)
+const nameFocused = ref(false)
+const emailFocused = ref(false)
+const pwFocused = ref(false)
 
 function handleSignUp() {
   errorMessage.value = ''
@@ -47,16 +126,10 @@ function handleSignUp() {
   }
 
   try {
-    auth.signUp({
-      name: name.value,
-      email: email.value,
-      password: password.value,
-    })
-
+    auth.signUp({ name: name.value, email: email.value, password: password.value })
     router.push('/initial-profile')
   } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : '회원가입에 실패했습니다.'
+    errorMessage.value = error instanceof Error ? error.message : '회원가입에 실패했습니다.'
   }
 }
 </script>
@@ -64,49 +137,172 @@ function handleSignUp() {
 <style scoped>
 .auth-page {
   min-height: 100dvh;
-  background: #f5f7fb;
+  background: var(--color-gray-50);
+  display: flex;
+  flex-direction: column;
 }
 
-.form-card {
-  margin: 20px 16px 0;
-  padding: 20px;
-  border-radius: 24px;
+.auth-header {
+  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+}
+
+.back-btn {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 14px;
   background: white;
-  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-700);
+  transition: transform var(--transition-fast);
+}
+
+.back-btn:active {
+  transform: scale(0.95);
+}
+
+.auth-content {
+  flex: 1;
+  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+}
+
+.auth-title-wrap {
+  margin-bottom: 36px;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+}
+
+.auth-subtitle {
+  margin: 8px 0 0;
+  color: var(--color-gray-500);
+  font-size: 15px;
+}
+
+.form-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .field {
   display: block;
-  margin-bottom: 16px;
 }
 
-.field span {
+.field-label {
   display: block;
   margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 700;
+  color: var(--color-gray-700);
 }
 
-.field input {
-  width: 100%;
-  min-height: 52px;
-  border: 1px solid #d1d5db;
-  border-radius: 16px;
+.input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 0 14px;
+  min-height: 54px;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: white;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.field.focused .input-wrap {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.field-icon {
+  color: var(--color-gray-400);
+  flex-shrink: 0;
+  transition: color var(--transition-base);
+}
+
+.field.focused .field-icon {
+  color: var(--color-primary);
+}
+
+.input-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-gray-900);
+}
+
+.input-wrap input::placeholder {
+  color: var(--color-gray-300);
+}
+
+.pw-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--color-gray-400);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.error-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 0;
+  color: var(--color-danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.slide-err-enter-active,
+.slide-err-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.slide-err-enter-from,
+.slide-err-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .primary-btn {
   width: 100%;
-  min-height: 54px;
+  min-height: 56px;
   border: 0;
-  border-radius: 18px;
-  background: #2563eb;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
   color: white;
+  font-size: 16px;
   font-weight: 800;
+  box-shadow: var(--shadow-blue);
+  transition: transform var(--transition-fast);
+  margin-top: 4px;
 }
 
-.error-text {
-  margin-top: 12px;
-  color: #dc2626;
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+.text-link {
+  display: block;
+  text-align: center;
+  color: var(--color-gray-500);
+  font-size: 14px;
+}
+
+.text-link strong {
+  color: var(--color-primary);
   font-weight: 700;
 }
 </style>

@@ -20,7 +20,10 @@
       <Transition name="fade">
         <div v-if="nearbyRoutePath.length > 0" class="nav-banner">
           <span class="nav-banner-text">
-            🛣️ {{ selectedStation?.name ?? '주유소' }}까지 경로 안내 중
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/>
+            </svg>
+            {{ selectedStation?.name ?? '주유소' }}까지 경로 안내 중
           </span>
           <button class="nav-banner-close" @click="clearNearbyRoute">종료</button>
         </div>
@@ -215,7 +218,7 @@ onMounted(() => {
 
 .map-area {
   position: relative;
-  height: calc(100dvh - 82px);
+  height: calc(100dvh - 78px);
   overflow: hidden;
   background: #dbeafe;
 }
@@ -236,21 +239,24 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: #1d4ed8;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-dark);
   color: white;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  box-shadow: var(--shadow-blue);
 }
 
 .nav-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 700;
 }
 
 .nav-banner-close {
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.2);
   color: white;
   font-size: 13px;
@@ -258,11 +264,16 @@ onMounted(() => {
   padding: 6px 12px;
   cursor: pointer;
   flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.nav-banner-close:active {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity var(--transition-base), transform var(--transition-base);
 }
 
 .fade-enter-from,

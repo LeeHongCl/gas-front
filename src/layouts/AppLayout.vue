@@ -20,6 +20,6 @@ import BottomTabBar from '@/components/BottomTabBar.vue'
 
 .app-main {
   min-height: 100dvh;
-  padding-bottom: 82px;
+  padding-bottom: 78px;
 }
 </style>
