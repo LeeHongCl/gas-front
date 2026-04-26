@@ -71,17 +71,43 @@
             </svg>
             전화
           </a>
+        </div>
+
+        <!-- 내비 버튼 -->
+        <div class="navi-row">
           <button
             type="button"
-            class="action-btn primary"
-            @click.stop.prevent="handleStartNavigation"
+            class="action-btn kakao-btn"
+            @click.stop.prevent="handleKakaoNavi"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
+            </svg>
+            카카오내비
+          </button>
+          <button
+            type="button"
+            class="action-btn naver-btn"
+            @click.stop.prevent="handleNaverMap"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
             </svg>
-            길찾기
+            네이버지도
           </button>
         </div>
+        <button
+          type="button"
+          class="action-btn tmap-btn"
+          :class="{ 'tmap-disabled': !isMobile }"
+          :disabled="!isMobile"
+          @click.stop.prevent="handleTmapNavi"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
+          </svg>
+          T map{{ !isMobile ? ' (모바일 전용)' : '' }}
+        </button>
       </section>
     </div>
   </Transition>
@@ -112,6 +138,8 @@ const BRAND_COLORS: Record<string, { bg: string; color: string }> = {
   알뜰: { bg: '#f0fdf4', color: '#16a34a' },
 }
 
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
 const brandStyle = computed(() => {
   if (!props.station) return { background: '#f3f4f6', color: '#6b7280' }
   const key = Object.keys(BRAND_COLORS).find((k) => props.station!.brand.includes(k))
@@ -119,13 +147,12 @@ const brandStyle = computed(() => {
   return { background: colors.bg, color: colors.color }
 })
 
-function handleStartNavigation() {
+function handleKakaoNavi() {
   if (!props.station) return
 
   const { name, lat, lng } = props.station
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
   const kakao = window.Kakao
-
   const destination = props.mode === 'route' ? routeStore.destination : null
 
   if (!kakao?.Navi || !isMobile) {
@@ -147,6 +174,58 @@ function handleStartNavigation() {
   } else {
     kakao.Navi.start({ name, x: lng, y: lat, coordType: 'wgs84' })
   }
+}
+
+function handleTmapNavi() {
+  if (!props.station || !isMobile) return
+
+  const { name, lat, lng } = props.station
+  const destination = props.mode === 'route' ? routeStore.destination : null
+
+  let tmapUrl: string
+  if (props.mode === 'route' && destination) {
+    tmapUrl = [
+      'tmap://route?',
+      `goalx=${destination.lng}&goaly=${destination.lat}`,
+      `&goalname=${encodeURIComponent(destination.name)}`,
+      `&via1x=${lng}&via1y=${lat}`,
+      `&via1name=${encodeURIComponent(name)}`,
+    ].join('')
+  } else {
+    tmapUrl = [
+      'tmap://route?',
+      `goalx=${lng}&goaly=${lat}`,
+      `&goalname=${encodeURIComponent(name)}`,
+    ].join('')
+  }
+
+  window.location.href = tmapUrl
+}
+
+function handleNaverMap() {
+  if (!props.station) return
+
+  const { name, lat, lng } = props.station
+  const destination = props.mode === 'route' ? routeStore.destination : null
+  const startPoint = routeStore.origin ?? routeStore.currentLocation
+
+  const encode = (s: string) => encodeURIComponent(s)
+  const toPoint = (p: { lat: number; lng: number }, label: string) =>
+    `${p.lng},${p.lat},${encode(label)},-,PLACE_POI`
+
+  const start = startPoint ? toPoint(startPoint, '출발지') : '-'
+
+  let url: string
+  if (props.mode === 'route' && destination) {
+    const via = toPoint({ lat, lng }, name)
+    const goal = toPoint(destination, destination.name)
+    url = `https://map.naver.com/v5/directions/${start}/${via}/${goal}/car`
+  } else {
+    const goal = toPoint({ lat, lng }, name)
+    url = `https://map.naver.com/v5/directions/${start}/${goal}/car`
+  }
+
+  window.open(url, '_blank')
 }
 
 function formatDistance(distance?: number) {
@@ -363,9 +442,16 @@ function formatDistance(distance?: number) {
 
 .action-row {
   display: grid;
-  grid-template-columns: 1fr 2.5fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-top: 18px;
+}
+
+.navi-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .action-btn {
@@ -401,5 +487,27 @@ function formatDistance(distance?: number) {
   background: var(--color-primary);
   color: white;
   box-shadow: var(--shadow-blue);
+}
+
+.action-btn.kakao-btn {
+  background: #FAE100;
+  color: #3C1E1E;
+}
+
+.action-btn.naver-btn {
+  background: #03C75A;
+  color: white;
+}
+
+.action-btn.tmap-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: #E84118;
+  color: white;
+}
+
+.action-btn.tmap-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>
