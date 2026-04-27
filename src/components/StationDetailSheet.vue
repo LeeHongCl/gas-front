@@ -208,24 +208,52 @@ function handleNaverMap() {
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
   const startPoint = routeStore.origin ?? routeStore.currentLocation
+  const startName = routeStore.origin?.name ?? '출발지'
 
   const encode = (s: string) => encodeURIComponent(s)
   const toPoint = (p: { lat: number; lng: number }, label: string) =>
     `${p.lng},${p.lat},${encode(label)},-,PLACE_POI`
 
-  const start = startPoint ? toPoint(startPoint, '출발지') : '-'
+  if (isMobile) {
+    // 모바일: nmap:// 앱 스킴 사용 — 경유지를 query param(via1)으로 전달해야 올바르게 인식됨
+    const params: string[] = []
+    if (startPoint) {
+      params.push(`slat=${startPoint.lat}`, `slng=${startPoint.lng}`, `sname=${encode(startName)}`)
+    }
+    if (props.mode === 'route' && destination) {
+      // 출발지 → 주유소(경유지) → 도착지
+      params.push(
+        `dlat=${destination.lat}`, `dlng=${destination.lng}`, `dname=${encode(destination.name)}`,
+        `via1lat=${lat}`, `via1lng=${lng}`, `via1name=${encode(name)}`,
+      )
+    } else {
+      params.push(`dlat=${lat}`, `dlng=${lng}`, `dname=${encode(name)}`)
+    }
+    params.push(`appname=com.example.gasstation`)
 
-  let url: string
-  if (props.mode === 'route' && destination) {
-    const via = toPoint({ lat, lng }, name)
-    const goal = toPoint(destination, destination.name)
-    url = `https://map.naver.com/v5/directions/${start}/${via}/${goal}/car`
+    const nmapUrl = `nmap://route/car?${params.join('&')}`
+
+    // 앱이 설치되지 않은 경우 웹으로 폴백
+    const webUrl = buildNaverWebUrl()
+    const fallbackTimer = setTimeout(() => window.open(webUrl, '_blank'), 1500)
+    window.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearTimeout(fallbackTimer)
+    }, { once: true })
+
+    window.location.href = nmapUrl
   } else {
-    const goal = toPoint({ lat, lng }, name)
-    url = `https://map.naver.com/v5/directions/${start}/${goal}/car`
+    // 데스크탑: 웹 URL 사용
+    window.open(buildNaverWebUrl(), '_blank')
   }
 
-  window.open(url, '_blank')
+  function buildNaverWebUrl(): string {
+    const start = startPoint ? toPoint(startPoint, startName) : '-'
+    if (props.mode === 'route' && destination) {
+      // 네이버 지도 웹 URL 형식: start / destination / via(경유지) / car
+      return `https://map.naver.com/v5/directions/${start}/${toPoint(destination, destination.name)}/${toPoint({ lat, lng }, name)}/car`
+    }
+    return `https://map.naver.com/v5/directions/${start}/${toPoint({ lat, lng }, name)}/car`
+  }
 }
 
 function formatDistance(distance?: number) {
