@@ -109,7 +109,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
           </svg>
-          T map{{ !isMobile ? ' (모바일 전용)' : '' }}
+          {{ isIOS ? 'Apple Maps' : 'T map' }}{{ !isMobile ? ' (모바일 전용)' : '' }}
         </button>
       </section>
     </div>
@@ -142,6 +142,7 @@ const BRAND_COLORS: Record<string, { bg: string; color: string }> = {
 }
 
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
 
 const brandStyle = computed(() => {
   if (!props.station) return { background: '#f3f4f6', color: '#6b7280' }
@@ -185,26 +186,47 @@ function handleTmapNavi() {
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
 
-  let tmapUrl: string
-  if (props.mode === 'route' && destination) {
-    tmapUrl = [
-      'tmap://route?',
-      `goalx=${destination.lng}&goaly=${destination.lat}`,
-      `&goalname=${encodeURIComponent(destination.name)}`,
-      `&via1x=${lng}&via1y=${lat}`,
-      `&via1name=${encodeURIComponent(name)}`,
-      `&coord=WGS84`,
-    ].join('')
-  } else {
-    tmapUrl = [
-      'tmap://route?',
-      `goalx=${lng}&goaly=${lat}`,
-      `&goalname=${encodeURIComponent(name)}`,
-      `&coord=WGS84`,
-    ].join('')
+  const startPoint = routeStore.origin ?? routeStore.currentLocation
+
+  // iOS: tmap:// URL 스킴 미지원 → Apple Maps로 폴백
+  if (isIOS) {
+    let appleUrl: string
+    if (props.mode === 'route' && destination) {
+      const saddr = startPoint ? `${startPoint.lat},${startPoint.lng}` : ''
+      appleUrl = `https://maps.apple.com/?${saddr ? `saddr=${saddr}&` : ''}daddr=${destination.lat},${destination.lng}&dirflg=d`
+    } else {
+      const saddr = startPoint ? `${startPoint.lat},${startPoint.lng}` : ''
+      appleUrl = `https://maps.apple.com/?${saddr ? `saddr=${saddr}&` : ''}daddr=${lat},${lng}&dirflg=d`
+    }
+    console.log('[Apple Maps URL]', appleUrl)
+    window.open(appleUrl, '_blank')
+    return
   }
 
-  // window.location.href 는 Capacitor WebView에서 커스텀 스킴을 못 열기 때문에 window.open 사용
+  // Android: tmap:// URL 스킴 사용
+  const appKey = import.meta.env.VITE_TMAP_APP_KEY
+  let tmapUrl: string
+  if (props.mode === 'route' && destination) {
+    const params: string[] = [
+      `goalX=${destination.lng}&goalY=${destination.lat}`,
+      `&goalName=${encodeURIComponent(destination.name)}`,
+      `&via1X=${lng}&via1Y=${lat}`,
+      `&via1Name=${encodeURIComponent(name)}`,
+      `&appKey=${appKey}`,
+    ]
+    if (startPoint) params.unshift(`startX=${startPoint.lng}&startY=${startPoint.lat}&`)
+    tmapUrl = `tmap://route?${params.join('')}`
+  } else {
+    const params: string[] = [
+      `goalX=${lng}&goalY=${lat}`,
+      `&goalName=${encodeURIComponent(name)}`,
+      `&appKey=${appKey}`,
+    ]
+    if (startPoint) params.unshift(`startX=${startPoint.lng}&startY=${startPoint.lat}&`)
+    tmapUrl = `tmap://route?${params.join('')}`
+  }
+
+  console.log('[TMap URL]', tmapUrl)
   const a = document.createElement('a')
   a.href = tmapUrl
   a.click()
