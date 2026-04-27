@@ -214,26 +214,19 @@ function handleNaverMap() {
   const toPoint = (p: { lat: number; lng: number }, label: string) =>
     `${p.lng},${p.lat},${encode(label)},-,PLACE_POI`
 
-  if (isMobile) {
-    // 모바일: nmap:// 앱 스킴 사용 — 경유지를 query param(via1)으로 전달해야 올바르게 인식됨
+  if (isMobile && !(props.mode === 'route' && destination)) {
+    // 모바일 단순 목적지 이동: nmap:// 앱 스킴으로 바로 열기
+    // (nmap:// 스킴은 경유지(via) 파라미터 미지원 → 경유지 있는 경우 웹 URL 사용)
     const params: string[] = []
     if (startPoint) {
       params.push(`slat=${startPoint.lat}`, `slng=${startPoint.lng}`, `sname=${encode(startName)}`)
     }
-    if (props.mode === 'route' && destination) {
-      // 출발지 → 주유소(경유지) → 도착지
-      params.push(
-        `dlat=${destination.lat}`, `dlng=${destination.lng}`, `dname=${encode(destination.name)}`,
-        `via1lat=${lat}`, `via1lng=${lng}`, `via1name=${encode(name)}`,
-      )
-    } else {
-      params.push(`dlat=${lat}`, `dlng=${lng}`, `dname=${encode(name)}`)
-    }
+    params.push(`dlat=${lat}`, `dlng=${lng}`, `dname=${encode(name)}`)
     params.push(`appname=com.example.gasstation`)
 
     const nmapUrl = `nmap://route/car?${params.join('&')}`
 
-    // 앱이 설치되지 않은 경우 웹으로 폴백
+    // 앱 미설치 시 웹으로 폴백
     const webUrl = buildNaverWebUrl()
     const fallbackTimer = setTimeout(() => window.open(webUrl, '_blank'), 1500)
     window.addEventListener('visibilitychange', () => {
@@ -242,7 +235,7 @@ function handleNaverMap() {
 
     window.location.href = nmapUrl
   } else {
-    // 데스크탑: 웹 URL 사용
+    // 경유지 포함 경로 또는 데스크탑: 웹 URL 사용 (경유지 지원)
     window.open(buildNaverWebUrl(), '_blank')
   }
 
