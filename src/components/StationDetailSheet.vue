@@ -193,12 +193,14 @@ function handleTmapNavi() {
       `&goalname=${encodeURIComponent(destination.name)}`,
       `&via1x=${lng}&via1y=${lat}`,
       `&via1name=${encodeURIComponent(name)}`,
+      `&coord=WGS84`,
     ].join('')
   } else {
     tmapUrl = [
       'tmap://route?',
       `goalx=${lng}&goaly=${lat}`,
       `&goalname=${encodeURIComponent(name)}`,
+      `&coord=WGS84`,
     ].join('')
   }
 
