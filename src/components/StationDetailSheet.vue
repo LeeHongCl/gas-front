@@ -88,6 +88,9 @@
           <button
             type="button"
             class="action-btn naver-btn"
+            :class="{ 'naver-disabled': isMobile && mode === 'route' }"
+            :disabled="isMobile && mode === 'route'"
+            :title="isMobile && mode === 'route' ? '경유지 포함 경로는 네이버 지도에서 지원되지 않습니다' : undefined"
             @click.stop.prevent="handleNaverMap"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -199,7 +202,10 @@ function handleTmapNavi() {
     ].join('')
   }
 
-  window.location.href = tmapUrl
+  // window.location.href 는 Capacitor WebView에서 커스텀 스킴을 못 열기 때문에 window.open 사용
+  const a = document.createElement('a')
+  a.href = tmapUrl
+  a.click()
 }
 
 function handleNaverMap() {
@@ -527,7 +533,8 @@ function formatDistance(distance?: number) {
   color: white;
 }
 
-.action-btn.tmap-disabled {
+.action-btn.tmap-disabled,
+.action-btn.naver-disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
