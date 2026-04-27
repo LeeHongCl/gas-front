@@ -52,7 +52,7 @@
 import { computed } from 'vue'
 import type { GasStation } from '@/types/gasStation'
 
-const props = defineProps<{ station: GasStation }>()
+const props = defineProps<{ station: GasStation; mode?: 'radius' | 'route' }>()
 
 defineEmits<{ (e: 'select', station: GasStation): void }>()
 
@@ -76,6 +76,10 @@ const brandStyle = computed(() => {
 
 function formatDistance(distance?: number) {
   if (distance == null) return '-'
+  if (props.mode === 'route') {
+    const meters = Math.round(distance * 1000)
+    return `우회거리: ${meters.toLocaleString()}m`
+  }
   if (distance < 1) return `${Math.round(distance * 1000)}m`
   return `${distance.toFixed(1)}km`
 }

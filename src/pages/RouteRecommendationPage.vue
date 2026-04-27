@@ -29,6 +29,7 @@
         <StationBottomSheet
           :stations="routeStore.recommendedStations"
           :expanded="sheetExpanded"
+          mode="route"
           @toggle-expand="sheetExpanded = !sheetExpanded"
           @select-station="routeStore.selectRecommendedStation"
         />

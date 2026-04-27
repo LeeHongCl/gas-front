@@ -34,6 +34,7 @@
         v-for="station in stations"
         :key="station.id"
         :station="station"
+        :mode="mode"
         @select="$emit('select-station', $event)"
       />
     </div>
@@ -48,6 +49,7 @@ import StationCard from './StationCard.vue'
 defineProps<{
   stations: GasStation[]
   expanded: boolean
+  mode?: 'radius' | 'route'
 }>()
 
 defineEmits<{
