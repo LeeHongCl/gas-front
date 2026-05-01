@@ -29,6 +29,7 @@
       Map: new (container: HTMLElement, options: unknown) => unknown
       Marker: new (options: unknown) => unknown
       Polyline: new (options: unknown) => unknown
+      LatLngBounds: new () => unknown
       event: {
         addListener: (target: unknown, type: string, handler: () => void) => void
       }

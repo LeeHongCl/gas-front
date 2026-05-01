@@ -12,6 +12,11 @@ import '@/utils/kakaoPlaceSearch'
 interface KakaoMapInstance {
   setCenter: (latlng: KakaoLatLng) => void
   relayout: () => void
+  setBounds: (bounds: KakaoBounds, pt?: number, pr?: number, pb?: number, pl?: number) => void
+}
+
+interface KakaoBounds {
+  extend: (latlng: KakaoLatLng) => void
 }
 
 interface KakaoLatLng {
@@ -34,6 +39,8 @@ const props = defineProps<{
   center: { lat: number; lng: number }
   routePath?: { lat: number; lng: number }[]
   currentLocation?: { lat: number; lng: number } | null
+  autoFit?: boolean
+  level?: number
 }>()
 
 const emit = defineEmits<{
@@ -148,6 +155,12 @@ function renderRouteLine() {
     strokeOpacity: 0.8,
     strokeStyle: 'solid',
   })
+
+  if (props.autoFit) {
+    const bounds = new (window.kakao.maps.LatLngBounds as new () => KakaoBounds)()
+    path.forEach((p) => bounds.extend(p))
+    map.setBounds(bounds, 60, 40, 60, 40)
+  }
 }
 
 function moveCenter(lat: number, lng: number) {
@@ -161,7 +174,7 @@ async function initMap() {
 
   map = new (window.kakao.maps.Map as new (container: HTMLElement, opts: unknown) => KakaoMapInstance)(
     mapRef.value,
-    { center: makeLatLng(props.center.lat, props.center.lng), level: 4 },
+    { center: makeLatLng(props.center.lat, props.center.lng), level: props.level ?? 4 },
   )
 
   renderCurrentLocationMarker()

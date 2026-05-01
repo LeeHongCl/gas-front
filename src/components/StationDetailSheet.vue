@@ -59,7 +59,7 @@
         </div>
 
         <!-- 액션 버튼 -->
-        <div class="action-row">
+        <div class="action-row" :class="{ 'action-row--single': !(mode === 'route' && routeStore.origin && routeStore.destination) }">
           <a
             class="action-btn secondary"
             :class="{ disabled: !station.tel }"
@@ -71,6 +71,21 @@
             </svg>
             전화
           </a>
+          <button
+            v-if="mode === 'route' && routeStore.origin && routeStore.destination"
+            type="button"
+            class="action-btn preview-btn"
+            :disabled="isPreviewLoading"
+            @click.stop="handlePreview"
+          >
+            <svg v-if="isPreviewLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" class="spin">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10"/>
+            </svg>
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M3 12h18M3 6l9-4 9 4M3 18l9 4 9-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ isPreviewLoading ? '경로 계산 중...' : '경로 미리보기' }}
+          </button>
         </div>
 
         <!-- 내비 버튼 -->
@@ -111,15 +126,30 @@
           </svg>
           {{ isIOS ? 'Apple Maps' : 'T map' }}{{ !isMobile ? ' (모바일 전용)' : '' }}
         </button>
+
+        <!-- 미리보기 에러 -->
+        <p v-if="previewError" class="preview-error">{{ previewError }}</p>
       </section>
     </div>
   </Transition>
+
+  <!-- 경로 미리보기 팝업 -->
+  <RoutePreviewModal
+    :show="showPreviewModal"
+    :route-path="routeStore.routePath"
+    :selected-station="station"
+    :origin="routeStore.origin"
+    :destination="routeStore.destination"
+    :route-summary="routeStore.routeSummary"
+    @close="showPreviewModal = false; routeStore.clearPreview()"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
+import RoutePreviewModal from '@/components/RoutePreviewModal.vue'
 
 const routeStore = useRouteStore()
 
@@ -128,10 +158,28 @@ const props = defineProps<{
   mode?: 'nearby' | 'route'
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'close'): void
   (e: 'route-ready', path: { lat: number; lng: number }[]): void
 }>()
+
+const isPreviewLoading = ref(false)
+const previewError = ref('')
+const showPreviewModal = ref(false)
+
+async function handlePreview() {
+  if (!props.station) return
+  isPreviewLoading.value = true
+  previewError.value = ''
+  try {
+    await routeStore.buildFullRoute()
+    showPreviewModal.value = true
+  } catch (err) {
+    previewError.value = err instanceof Error ? err.message : '경로를 불러오지 못했습니다.'
+  } finally {
+    isPreviewLoading.value = false
+  }
+}
 
 const BRAND_COLORS: Record<string, { bg: string; color: string }> = {
   SK: { bg: '#fff0e6', color: '#ea580c' },
@@ -493,9 +541,33 @@ function formatDistance(distance?: number) {
 
 .action-row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 18px;
+}
+
+.action-row--single {
+  grid-template-columns: 1fr;
+}
+
+.action-btn.preview-btn {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-blue);
+}
+
+.action-btn.preview-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 .navi-row {
@@ -561,5 +633,16 @@ function formatDistance(distance?: number) {
 .action-btn.naver-disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.preview-error {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 </style>

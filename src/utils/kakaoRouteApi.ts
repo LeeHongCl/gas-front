@@ -68,26 +68,40 @@ export async function fetchKakaoRoute(
   // 응답 구조: data.routes[0].sections[].roads[].vertexes
   const route = data.routes?.[0]
 
-  if (!route || route.result_code !== 0) {
-    const msg = route?.result_msg ?? '경로를 찾을 수 없습니다.'
-    throw new Error(`카카오 길찾기: ${msg}`)
+  if (!route) {
+    throw new Error('경로를 찾을 수 없습니다.')
+  }
+
+  // 1~99: 치명적 오류 (경로 데이터 없음)
+  // 100~: 경고 (교통 장애 등) — 경로 데이터는 정상 반환됨
+  const code: number = route.result_code ?? -1
+  if (code > 0 && code < 100) {
+    throw new Error(route.result_msg ?? '경로를 찾을 수 없습니다.')
+  }
+
+  if (code !== 0) {
+    console.warn(`[KakaoRoute] result_code=${code} msg="${route.result_msg}"`)
+  }
+
+  const sections: unknown[] = route.sections ?? []
+  console.log(`[KakaoRoute] sections=${sections.length}`)
+  if (sections.length === 0) {
+    console.warn('[KakaoRoute] sections 비어있음. 전체 route:', JSON.stringify(route))
   }
 
   const path: LatLng[] = []
 
-  for (const section of route.sections ?? []) {
+  for (const section of sections as { roads?: { vertexes?: number[] }[] }[]) {
     for (const road of section.roads ?? []) {
       // vertexes = [lng1, lat1, lng2, lat2, ...] 플랫 배열
       const v: number[] = road.vertexes ?? []
-      for (let i = 0; i < v.length - 1; i += 2) {
-        const lng = v[i]
-        const lat = v[i + 1]
-        if (lng !== undefined && lat !== undefined) {
-          path.push({ lng, lat })
-        }
+      for (let i = 0; i + 1 < v.length; i += 2) {
+        path.push({ lng: v[i]!, lat: v[i + 1]! })
       }
     }
   }
+
+  console.log(`[KakaoRoute] path points=${path.length}`)
 
   const summary = route.summary ?? {}
   const totalDistanceM: number = summary.distance ?? 0

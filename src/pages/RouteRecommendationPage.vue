@@ -257,4 +257,5 @@ onUnmounted(() => {
 }
 
 .exit-nav-btn:active { opacity: 0.8; }
+
 </style>

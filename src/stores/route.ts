@@ -46,6 +46,13 @@
       console.log('✅ selectRecommendedStation', station)
       selectedStation.value = station
       mapCenter.value = { lat: station.lat, lng: station.lng }
+      routePath.value = []
+      routeSummary.value = null
+    }
+
+    function clearPreview() {
+      routePath.value = []
+      routeSummary.value = null
     }
 
     function updateCurrentLocation(lat: number, lng: number) {
@@ -118,27 +125,38 @@
     }
 
     async function buildFullRoute(): Promise<void> {
-      if (!origin.value || !selectedStation.value || !destination.value) return
-
-      try {
-        const result = await fetchKakaoRoute(
-          { lat: origin.value.lat, lng: origin.value.lng },
-          { lat: destination.value.lat, lng: destination.value.lng },
-          { lat: selectedStation.value.lat, lng: selectedStation.value.lng },
-        )
-
-        routePath.value = result.path
-        routeSummary.value = {
-          distanceM: result.totalDistanceM,
-          durationSec: result.totalDurationSec,
-        }
-
-        console.log('✅ 전체 경로 생성됨 (경유지 포함)', result.path.length, '개 좌표')
-      } catch (err) {
-        console.error('카카오 전체 경로 오류:', err)
-        routePath.value = []
-        routeSummary.value = null
+      if (!origin.value || !selectedStation.value || !destination.value) {
+        throw new Error('출발지, 주유소, 목적지가 모두 필요합니다.')
       }
+
+      // 세 좌표 모두 도로 위로 스냅 (비도로 좌표로 인한 유고 오류 방지)
+      const [snappedOrigin, snappedStation, snappedDest] = await Promise.all([
+        snapCoordToRoad(origin.value.lat, origin.value.lng),
+        snapCoordToRoad(selectedStation.value.lat, selectedStation.value.lng),
+        snapCoordToRoad(destination.value.lat, destination.value.lng),
+      ])
+
+      console.log('[buildFullRoute] snapped origin:', snappedOrigin)
+      console.log('[buildFullRoute] snapped station:', snappedStation)
+      console.log('[buildFullRoute] snapped dest:', snappedDest)
+
+      const result = await fetchKakaoRoute(snappedOrigin, snappedDest, snappedStation)
+
+      if (result.path.length < 2) {
+        throw new Error(
+          `경로 좌표를 받아오지 못했습니다. (브라우저 콘솔에서 [KakaoRoute] 로그를 확인해주세요)`,
+        )
+      }
+
+      routePath.value = result.path
+      routeSummary.value = {
+        distanceM: result.totalDistanceM,
+        durationSec: result.totalDurationSec,
+      }
+
+      mapCenter.value = { lat: origin.value.lat, lng: origin.value.lng }
+
+      console.log('✅ 전체 경로 생성됨 (경유지 포함)', result.path.length, '개 좌표')
     }
 
     // ─── 내비게이션 제어 ──────────────────────────────────────────
@@ -288,5 +306,6 @@
       buildRouteToStation,
       buildRouteToDestination,
       buildFullRoute,
+      clearPreview,
     }
   })
