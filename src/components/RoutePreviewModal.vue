@@ -64,6 +64,9 @@
               :center="mapCenter"
               :route-path="routePath"
               :auto-fit="true"
+              :show-center-marker="false"
+              :origin-point="origin"
+              :destination-point="destination"
             />
           </div>
 

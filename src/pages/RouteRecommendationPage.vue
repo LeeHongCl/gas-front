@@ -3,7 +3,9 @@
     <div class="map-area">
       <div class="map-canvas">
         <KakaoMapView
-          :stations="routeStore.recommendedStations"
+          :stations="routeStore.routePath.length && routeStore.selectedStation
+            ? [routeStore.selectedStation]
+            : routeStore.recommendedStations"
           :selected-station="routeStore.selectedStation"
           :center="routeStore.mapCenter"
           :route-path="routeStore.routePath"
