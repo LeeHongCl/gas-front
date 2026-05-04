@@ -280,6 +280,7 @@
         navigationStep.value = 'idle'
         routePath.value = []
         routeSummary.value = null
+        allRoutePaths.value = []
 
         // 도로 위 좌표 보정 (교차로·캠퍼스 등 비도로 좌표 대응)
         const [snappedOrigin, snappedDestination] = await Promise.all([
@@ -306,6 +307,8 @@
         const first = recommendedStations.value[0]
         if (first) {
           mapCenter.value = { lat: first.lat, lng: first.lng }
+          // 추천 결과가 나오면 바로 경로 비교 자동 실행
+          buildAllRoutes().catch((e) => console.warn('경로 비교 자동 실행 실패:', e))
         } else {
           error.value = '추천 결과가 없습니다.'
         }
