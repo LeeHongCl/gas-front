@@ -30,6 +30,7 @@
       Marker: new (options: unknown) => unknown
       Polyline: new (options: unknown) => unknown
       LatLngBounds: new () => unknown
+      CustomOverlay: new (options: unknown) => unknown
       event: {
         addListener: (target: unknown, type: string, handler: () => void) => void
       }
