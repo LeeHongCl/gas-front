@@ -1,6 +1,28 @@
 <template>
   <section class="route-form-card">
 
+    <!-- ── 헤더 (접기/펼치기) ── -->
+    <div class="form-top-bar">
+      <div v-if="collapsed" class="form-summary" @click="collapsed = false">
+        <span class="sum-dot origin-dot" />
+        <span class="sum-name">{{ origin?.name ?? '출발지 미설정' }}</span>
+        <svg class="sum-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="sum-dot dest-dot" />
+        <span class="sum-name">{{ destination?.name ?? '목적지 미설정' }}</span>
+      </div>
+      <span v-else class="form-top-label">경로 검색</span>
+      <button class="form-collapse-btn" @click="collapsed = !collapsed">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path v-if="collapsed" d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path v-else d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div v-show="!collapsed">
+
     <!-- ── 출발지 ── -->
     <div class="field-group">
       <div class="field-header">
@@ -173,6 +195,8 @@
       </button>
       <button class="secondary-btn" @click="clearAll">초기화</button>
     </div>
+
+    </div><!-- /v-show -->
   </section>
 </template>
 
@@ -194,6 +218,9 @@ const emit = defineEmits<{
   (e: 'search-route'): void
   (e: 'clear-route'): void
 }>()
+
+// ── 접기/펼치기 ───────────────────────────────────
+const collapsed = ref(false)
 
 // ── 모드 ──────────────────────────────────────────
 type InputMode = 'search' | 'address' | 'current'
@@ -340,6 +367,76 @@ function clearAll() {
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── 헤더 행 ── */
+.form-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.form-top-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-gray-500);
+}
+
+.form-collapse-btn {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-100);
+  color: var(--color-gray-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.form-collapse-btn:active {
+  background: var(--color-gray-200);
+}
+
+/* ── 최소화 요약 뷰 ── */
+.form-summary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.sum-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sum-dot.origin-dot { background: var(--color-primary); }
+.sum-dot.dest-dot   { background: var(--color-success, #16a34a); }
+
+.sum-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-gray-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.sum-arrow {
+  flex-shrink: 0;
+  color: var(--color-gray-400);
 }
 
 .field-group {

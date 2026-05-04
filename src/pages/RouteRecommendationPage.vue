@@ -9,7 +9,12 @@
           :selected-station="routeStore.selectedStation"
           :center="routeStore.mapCenter"
           :route-path="routeStore.routePath"
+          :all-route-paths="routeStore.allRoutePaths"
           :current-location="routeStore.currentLocation"
+          :origin-point="routeStore.origin"
+          :destination-point="routeStore.destination"
+          :station-colors="ROUTE_COLORS"
+          :show-center-marker="false"
           @select-station="routeStore.selectRecommendedStation"
         />
       </div>
@@ -28,7 +33,40 @@
           />
         </div>
 
+        <!-- 경로 비교 버튼 -->
+        <div
+          v-if="routeStore.recommendedStations.length > 0"
+          class="compare-bar"
+          :style="{ bottom: compareBarBottom + 'px' }"
+        >
+          <button
+            class="compare-btn"
+            :class="{ active: routeStore.allRoutePaths.length > 0 }"
+            :disabled="routeStore.allRoutesLoading"
+            @click="handleCompareRoutes"
+          >
+            <span v-if="routeStore.allRoutesLoading" class="btn-spinner" />
+            <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            {{ routeStore.allRoutesLoading ? '경로 계산 중...' : routeStore.allRoutePaths.length > 0 ? '경로 비교 닫기' : '경로 비교' }}
+          </button>
+
+          <!-- 범례 -->
+          <div v-if="routeStore.allRoutePaths.length > 0" class="legend">
+            <span
+              v-for="(item, i) in routeStore.allRoutePaths"
+              :key="item.stationId"
+              class="legend-item"
+            >
+              <span class="legend-dot" :style="{ background: item.color }" />
+              {{ routeStore.recommendedStations[i]?.name ?? `주유소 ${i + 1}` }}
+            </span>
+          </div>
+        </div>
+
         <StationBottomSheet
+          ref="bottomSheetRef"
           :stations="routeStore.recommendedStations"
           :expanded="sheetExpanded"
           mode="route"
@@ -103,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import KakaoMapView from '@/components/KakaoMapView.vue'
 import StationBottomSheet from '@/components/StationBottomSheet.vue'
 import StationDetailSheet from '@/components/StationDetailSheet.vue'
@@ -111,8 +149,23 @@ import RoutePointForm from '@/components/route/RoutePointForm.vue'
 import { useRouteStore } from '@/stores/route'
 
 const routeStore = useRouteStore()
+const ROUTE_COLORS = ['#2563eb', '#ea580c', '#16a34a']
 const sheetExpanded = ref(true)
 const navigatingToDestination = ref(false)
+const bottomSheetRef = ref<{ sheetHeight: number } | null>(null)
+
+const compareBarBottom = computed(() => {
+  const sheetH = bottomSheetRef.value?.sheetHeight ?? 220
+  return sheetH + 12
+})
+
+async function handleCompareRoutes() {
+  if (routeStore.allRoutePaths.length > 0) {
+    routeStore.clearAllRoutes()
+  } else {
+    await routeStore.buildAllRoutes()
+  }
+}
 
 async function handleArrive() {
   navigatingToDestination.value = true
@@ -259,5 +312,80 @@ onUnmounted(() => {
 }
 
 .exit-nav-btn:active { opacity: 0.8; }
+
+.compare-bar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+  transition: bottom 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.compare-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: white;
+  color: var(--color-gray-800);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.compare-btn.active {
+  background: var(--color-gray-900);
+  color: white;
+}
+
+.compare-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,0.15);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: white;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+  color: var(--color-gray-700);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 </style>

@@ -42,12 +42,15 @@ const props = defineProps<{
   selectedStation: GasStation | null
   center: { lat: number; lng: number }
   routePath?: { lat: number; lng: number }[]
+  allRoutePaths?: { stationId: string; color: string; path: { lat: number; lng: number }[] }[]
   currentLocation?: { lat: number; lng: number } | null
   autoFit?: boolean
   level?: number
   showCenterMarker?: boolean
   originPoint?: { lat: number; lng: number; name?: string } | null
   destinationPoint?: { lat: number; lng: number; name?: string } | null
+  /** 주유소 마커 색상 배열 (순위별). 제공 시 번호+색상 원형 마커로 렌더링 */
+  stationColors?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -56,11 +59,16 @@ const emit = defineEmits<{
 
 const mapRef = ref<HTMLElement | null>(null)
 
+// 공통 인터페이스: Marker / CustomOverlay 모두 setMap을 가짐
+type MapObject = { setMap: (map: KakaoMapInstance | null) => void }
+
 let map: KakaoMapInstance | null = null
-let markers: KakaoMarkerInstance[] = []
+let markers: MapObject[] = []
+let stationHandlerKeys: string[] = []  // CustomOverlay onclick 핸들러 키 추적
 let currentMarker: KakaoMarkerInstance | null = null
 let userMarker: KakaoMarkerInstance | null = null
 let polyline: KakaoPolylineInstance | null = null
+let allPolylines: KakaoPolylineInstance[] = []
 let originOverlay: KakaoOverlayInstance | null = null
 let destOverlay: KakaoOverlayInstance | null = null
 
@@ -101,8 +109,11 @@ function makeLatLng(lat: number, lng: number): KakaoLatLng {
 }
 
 function clearMarkers() {
-  markers.forEach((marker) => marker.setMap(null))
+  markers.forEach((m) => m.setMap(null))
   markers = []
+  // CustomOverlay onclick 글로벌 핸들러 정리
+  stationHandlerKeys.forEach((key) => { delete (window as Record<string, unknown>)[key] })
+  stationHandlerKeys = []
 }
 
 function renderCurrentLocationMarker() {
@@ -129,22 +140,56 @@ function renderUserLocation() {
   }
 }
 
+function makeStationMarkerContent(rank: number, color: string) {
+  return [
+    `<div onclick="window['__sc_${rank}']()" style="`,
+    `width:32px;height:32px;`,
+    `background:${color};`,
+    `border:2.5px solid white;`,
+    `border-radius:50%;`,
+    `display:flex;align-items:center;justify-content:center;`,
+    `color:white;font-size:13px;font-weight:900;line-height:1;`,
+    `box-shadow:0 2px 10px rgba(0,0,0,0.35);`,
+    `cursor:pointer;pointer-events:auto;`,
+    `">`,
+    `${rank}`,
+    `</div>`,
+  ].join('')
+}
+
 function renderStationMarkers() {
   if (!map) return
   clearMarkers()
 
-  props.stations.forEach((station) => {
-    const marker = new (window.kakao.maps.Marker as new (opts: unknown) => KakaoMarkerInstance)({
-      map,
-      position: makeLatLng(station.lat, station.lng),
-      title: station.name,
-    })
+  props.stations.forEach((station, index) => {
+    const color = props.stationColors?.[index]
 
-    window.kakao.maps.event.addListener(marker, 'click', () => {
-      emit('select-station', station)
-    })
+    if (color) {
+      // 순위 번호 + 경로 색 원형 마커
+      const rank = index + 1
+      const key = `__sc_${rank}`
+      stationHandlerKeys.push(key);
+      (window as Record<string, unknown>)[key] = () => emit('select-station', station)
 
-    markers.push(marker)
+      const overlay = new (window.kakao.maps.CustomOverlay as new (opts: unknown) => KakaoOverlayInstance)({
+        position: makeLatLng(station.lat, station.lng),
+        content: makeStationMarkerContent(rank, color),
+        yAnchor: 0.5,
+        map,
+      })
+      markers.push(overlay)
+    } else {
+      // 색상 정보 없을 때 기본 마커
+      const marker = new (window.kakao.maps.Marker as new (opts: unknown) => KakaoMarkerInstance)({
+        map,
+        position: makeLatLng(station.lat, station.lng),
+        title: station.name,
+      })
+      window.kakao.maps.event.addListener(marker, 'click', () => {
+        emit('select-station', station)
+      })
+      markers.push(marker)
+    }
   })
 }
 
@@ -174,8 +219,64 @@ function renderRouteLine() {
   }
 }
 
-function makeOverlayContent(label: string, color: string) {
-  return `<div style="background:${color};color:white;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.25);pointer-events:none">${label}</div>`
+function renderAllRouteLines() {
+  if (!map) return
+
+  // 기존 다중 폴리라인 제거
+  allPolylines.forEach((pl) => pl.setMap(null))
+  allPolylines = []
+
+  const routes = props.allRoutePaths ?? []
+  if (routes.length === 0) return
+
+  const bounds = new (window.kakao.maps.LatLngBounds as new () => KakaoBounds)()
+
+  routes.forEach(({ path, color }) => {
+    if (path.length < 2) return
+    const kakaoPath = path.map((pt) => makeLatLng(pt.lat, pt.lng))
+
+    const pl = new (window.kakao.maps.Polyline as new (opts: unknown) => KakaoPolylineInstance)({
+      map,
+      path: kakaoPath,
+      strokeWeight: 5,
+      strokeColor: color,
+      strokeOpacity: 0.85,
+      strokeStyle: 'solid',
+    })
+    allPolylines.push(pl)
+    kakaoPath.forEach((p) => bounds.extend(p))
+  })
+
+  // 모든 경로가 보이도록 지도 범위 조정
+  if (allPolylines.length > 0) map.setBounds(bounds, 80, 60, 80, 60)
+}
+
+/** 출발/도착 핀 마커 HTML — 원 위에 라벨 말풍선 */
+function makeEndpointContent(label: string, color: string, icon: string) {
+  const truncated = label.length > 10 ? label.slice(0, 10) + '…' : label
+  return [
+    `<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;gap:2px;">`,
+    // 라벨 말풍선
+    `<div style="`,
+    `background:${color};color:white;`,
+    `padding:4px 10px;border-radius:20px;`,
+    `font-size:11px;font-weight:800;white-space:nowrap;`,
+    `box-shadow:0 2px 6px rgba(0,0,0,0.25);`,
+    `">${icon} ${truncated}</div>`,
+    // 아래 꼭짓점 삼각형
+    `<div style="`,
+    `width:0;height:0;`,
+    `border-left:5px solid transparent;border-right:5px solid transparent;`,
+    `border-top:6px solid ${color};`,
+    `"></div>`,
+    // 점
+    `<div style="`,
+    `width:8px;height:8px;background:${color};`,
+    `border:2px solid white;border-radius:50%;`,
+    `box-shadow:0 1px 4px rgba(0,0,0,0.3);margin-top:-2px;`,
+    `"></div>`,
+    `</div>`,
+  ].join('')
 }
 
 function renderOriginDestMarkers() {
@@ -189,8 +290,8 @@ function renderOriginDestMarkers() {
   if (props.originPoint) {
     originOverlay = new (window.kakao.maps.CustomOverlay as new (opts: unknown) => KakaoOverlayInstance)({
       position: makeLatLng(props.originPoint.lat, props.originPoint.lng),
-      content: makeOverlayContent(props.originPoint.name ?? '출발', '#2563eb'),
-      yAnchor: 1.4,
+      content: makeEndpointContent(props.originPoint.name ?? '출발', '#2563eb', '●'),
+      yAnchor: 1.2,
       map,
     })
   }
@@ -198,8 +299,8 @@ function renderOriginDestMarkers() {
   if (props.destinationPoint) {
     destOverlay = new (window.kakao.maps.CustomOverlay as new (opts: unknown) => KakaoOverlayInstance)({
       position: makeLatLng(props.destinationPoint.lat, props.destinationPoint.lng),
-      content: makeOverlayContent(props.destinationPoint.name ?? '도착', '#16a34a'),
-      yAnchor: 1.4,
+      content: makeEndpointContent(props.destinationPoint.name ?? '도착', '#16a34a', '▲'),
+      yAnchor: 1.2,
       map,
     })
   }
@@ -223,6 +324,7 @@ async function initMap() {
   renderUserLocation()
   renderStationMarkers()
   renderRouteLine()
+  renderAllRouteLines()
   renderOriginDestMarkers()
 
   setTimeout(() => {
@@ -243,7 +345,8 @@ watch(() => props.stations,    () => { if (map) renderStationMarkers() }, { deep
 watch(() => props.center,      (c) => { if (map) { moveCenter(c.lat, c.lng); renderCurrentLocationMarker() } }, { deep: true })
 watch(() => props.selectedStation, () => { if (map && props.selectedStation) moveCenter(props.selectedStation.lat, props.selectedStation.lng) })
 watch(() => props.currentLocation, () => { if (map) renderUserLocation() }, { deep: true })
-watch(() => props.routePath,   () => { if (map) renderRouteLine() }, { deep: true })
+watch(() => props.routePath,      () => { if (map) renderRouteLine() }, { deep: true })
+watch(() => props.allRoutePaths,  () => { if (map) renderAllRouteLines() }, { deep: true })
 watch(() => [props.originPoint, props.destinationPoint], () => { if (map) renderOriginDestMarkers() }, { deep: true })
 </script>
 

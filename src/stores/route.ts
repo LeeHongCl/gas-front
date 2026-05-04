@@ -31,6 +31,10 @@
     const routePath = ref<{ lat: number; lng: number }[]>([])
     const routeSummary = ref<{ distanceM: number; durationSec: number } | null>(null)
 
+    const ROUTE_COLORS = ['#2563eb', '#ea580c', '#16a34a']
+    const allRoutePaths = ref<{ stationId: string; color: string; path: { lat: number; lng: number }[] }[]>([])
+    const allRoutesLoading = ref(false)
+
     // ─── 기본 세터 ────────────────────────────────────────────────
 
     function setOrigin(point: RoutePoint) {
@@ -210,6 +214,45 @@
         : { lat: 35.8691, lng: 128.5945 }
     }
 
+    // ─── 전체 추천 주유소 경로 비교 ───────────────────────────────
+
+    async function buildAllRoutes(): Promise<void> {
+      if (!origin.value || !destination.value || recommendedStations.value.length === 0) return
+
+      allRoutesLoading.value = true
+      allRoutePaths.value = []
+
+      const [snappedOrigin, snappedDest] = await Promise.all([
+        snapCoordToRoad(origin.value.lat, origin.value.lng),
+        snapCoordToRoad(destination.value.lat, destination.value.lng),
+      ])
+
+      const results = await Promise.allSettled(
+        recommendedStations.value.map(async (station, index) => {
+          const snappedStation = await snapCoordToRoad(station.lat, station.lng)
+          const result = await fetchKakaoRoute(snappedOrigin, snappedDest, snappedStation)
+          return {
+            stationId: station.id,
+            color: ROUTE_COLORS[index] ?? '#2563eb',
+            path: result.path,
+          }
+        }),
+      )
+
+      allRoutePaths.value = results
+        .filter((r): r is PromiseFulfilledResult<typeof allRoutePaths.value[number]> => r.status === 'fulfilled')
+        .map((r) => r.value)
+
+      allRoutesLoading.value = false
+
+      // 전체 경로가 보이도록 지도 중심을 출발지로
+      if (origin.value) mapCenter.value = { lat: origin.value.lat, lng: origin.value.lng }
+    }
+
+    function clearAllRoutes() {
+      allRoutePaths.value = []
+    }
+
     function clearRoutePlan() {
       origin.value = null
       destination.value = null
@@ -219,6 +262,7 @@
       navigationStep.value = 'idle'
       routePath.value = []
       routeSummary.value = null
+      allRoutePaths.value = []
     }
 
     // ─── 추천 API 호출 ────────────────────────────────────────────
@@ -307,5 +351,9 @@
       buildRouteToDestination,
       buildFullRoute,
       clearPreview,
+      allRoutePaths,
+      allRoutesLoading,
+      buildAllRoutes,
+      clearAllRoutes,
     }
   })

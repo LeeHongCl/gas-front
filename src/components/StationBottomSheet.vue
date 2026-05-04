@@ -118,6 +118,8 @@ onUnmounted(() => {
   window.removeEventListener('mouseup', endDrag)
   window.removeEventListener('touchend', endDrag)
 })
+
+defineExpose({ sheetHeight })
 </script>
 
 <style scoped>
