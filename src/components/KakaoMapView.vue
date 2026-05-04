@@ -112,7 +112,7 @@ function clearMarkers() {
   markers.forEach((m) => m.setMap(null))
   markers = []
   // CustomOverlay onclick 글로벌 핸들러 정리
-  stationHandlerKeys.forEach((key) => { delete (window as Record<string, unknown>)[key] })
+  stationHandlerKeys.forEach((key) => { delete (window as unknown as Record<string, unknown>)[key] })
   stationHandlerKeys = []
 }
 
@@ -169,7 +169,7 @@ function renderStationMarkers() {
       const rank = index + 1
       const key = `__sc_${rank}`
       stationHandlerKeys.push(key);
-      (window as Record<string, unknown>)[key] = () => emit('select-station', station)
+      (window as unknown as Record<string, unknown>)[key] = () => emit('select-station', station)
 
       const overlay = new (window.kakao.maps.CustomOverlay as new (opts: unknown) => KakaoOverlayInstance)({
         position: makeLatLng(station.lat, station.lng),
