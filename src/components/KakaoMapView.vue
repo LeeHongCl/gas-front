@@ -51,6 +51,8 @@ const props = defineProps<{
   destinationPoint?: { lat: number; lng: number; name?: string } | null
   /** 주유소 마커 색상 배열 (순위별). 제공 시 번호+색상 원형 마커로 렌더링 */
   stationColors?: string[]
+  /** 경로 비교 중 맨 위로 올릴 stationId */
+  activeRouteStationId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -222,32 +224,41 @@ function renderRouteLine() {
 function renderAllRouteLines() {
   if (!map) return
 
-  // 기존 다중 폴리라인 제거
   allPolylines.forEach((pl) => pl.setMap(null))
   allPolylines = []
 
   const routes = props.allRoutePaths ?? []
   if (routes.length === 0) return
 
+  const activeId = props.activeRouteStationId
+  const hasActive = !!activeId
+
+  // 활성 경로를 맨 마지막에 그려서 z-order 최상위로
+  const sorted = hasActive
+    ? [...routes].sort((a, b) =>
+        a.stationId === activeId ? 1 : b.stationId === activeId ? -1 : 0,
+      )
+    : routes
+
   const bounds = new (window.kakao.maps.LatLngBounds as new () => KakaoBounds)()
 
-  routes.forEach(({ path, color }) => {
+  sorted.forEach(({ stationId, path, color }) => {
     if (path.length < 2) return
     const kakaoPath = path.map((pt) => makeLatLng(pt.lat, pt.lng))
+    const isActive = !hasActive || stationId === activeId
 
     const pl = new (window.kakao.maps.Polyline as new (opts: unknown) => KakaoPolylineInstance)({
       map,
       path: kakaoPath,
-      strokeWeight: 5,
+      strokeWeight: isActive ? 6 : 4,
       strokeColor: color,
-      strokeOpacity: 0.85,
+      strokeOpacity: isActive ? 0.95 : 0.35,
       strokeStyle: 'solid',
     })
     allPolylines.push(pl)
     kakaoPath.forEach((p) => bounds.extend(p))
   })
 
-  // 모든 경로가 보이도록 지도 범위 조정
   if (allPolylines.length > 0) map.setBounds(bounds, 80, 60, 80, 60)
 }
 
@@ -346,7 +357,8 @@ watch(() => props.center,      (c) => { if (map) { moveCenter(c.lat, c.lng); ren
 watch(() => props.selectedStation, () => { if (map && props.selectedStation) moveCenter(props.selectedStation.lat, props.selectedStation.lng) })
 watch(() => props.currentLocation, () => { if (map) renderUserLocation() }, { deep: true })
 watch(() => props.routePath,      () => { if (map) renderRouteLine() }, { deep: true })
-watch(() => props.allRoutePaths,  () => { if (map) renderAllRouteLines() }, { deep: true })
+watch(() => props.allRoutePaths,         () => { if (map) renderAllRouteLines() }, { deep: true })
+watch(() => props.activeRouteStationId, () => { if (map) renderAllRouteLines() })
 watch(() => [props.originPoint, props.destinationPoint], () => { if (map) renderOriginDestMarkers() }, { deep: true })
 </script>
 

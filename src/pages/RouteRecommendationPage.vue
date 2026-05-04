@@ -15,6 +15,7 @@
           :destination-point="routeStore.destination"
           :station-colors="ROUTE_COLORS"
           :show-center-marker="false"
+          :active-route-station-id="activeRouteStationId"
           @select-station="routeStore.selectRecommendedStation"
         />
       </div>
@@ -54,14 +55,16 @@
 
           <!-- 범례 -->
           <div v-if="routeStore.allRoutePaths.length > 0" class="legend">
-            <span
+            <button
               v-for="(item, i) in routeStore.allRoutePaths"
               :key="item.stationId"
               class="legend-item"
+              :class="{ 'legend-item--active': activeRouteStationId === item.stationId }"
+              @click="toggleActiveRoute(item.stationId)"
             >
               <span class="legend-dot" :style="{ background: item.color }" />
               {{ routeStore.recommendedStations[i]?.name ?? `주유소 ${i + 1}` }}
-            </span>
+            </button>
           </div>
         </div>
 
@@ -152,6 +155,11 @@ const routeStore = useRouteStore()
 const ROUTE_COLORS = ['#2563eb', '#ea580c', '#16a34a']
 const sheetExpanded = ref(true)
 const navigatingToDestination = ref(false)
+const activeRouteStationId = ref<string | null>(null)
+
+function toggleActiveRoute(stationId: string) {
+  activeRouteStationId.value = activeRouteStationId.value === stationId ? null : stationId
+}
 const bottomSheetRef = ref<{ sheetHeight: number } | null>(null)
 
 const compareBarBottom = computed(() => {
@@ -162,6 +170,7 @@ const compareBarBottom = computed(() => {
 async function handleCompareRoutes() {
   if (routeStore.allRoutePaths.length > 0) {
     routeStore.clearAllRoutes()
+    activeRouteStationId.value = null
   } else {
     await routeStore.buildAllRoutes()
   }
@@ -373,12 +382,26 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-full);
   background: white;
   font-size: 12px;
   font-weight: 700;
   box-shadow: var(--shadow-md);
   color: var(--color-gray-700);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.legend-item--active {
+  border-color: var(--color-gray-800);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.05);
+}
+
+.legend-item:active {
+  transform: scale(0.97);
 }
 
 .legend-dot {
