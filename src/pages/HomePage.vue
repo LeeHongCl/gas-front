@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useNoBodyScroll } from '@/composables/useNoBodyScroll'
 import SearchBar from '@/components/SearchBar.vue'
 import FloatingButtons from '@/components/FloatingButtons.vue'
 import StationBottomSheet from '@/components/StationBottomSheet.vue'
@@ -76,6 +77,8 @@ import { useRouteStore } from '@/stores/route'
 
 const store = useNearbyStore()
 const routeStore = useRouteStore()
+
+useNoBodyScroll()
 
 const keyword = ref('')
 const isFilterOpen = ref(false)

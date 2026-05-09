@@ -1,106 +1,104 @@
 <template>
-  <div class="nearby-page">
-    <!-- 상단 헤더 -->
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">주변 주유소</h1>
-        <p class="page-sub">현재 위치 기준으로 검색합니다</p>
+  <div class="page">
+    <div class="map-area">
+      <!-- 지도 -->
+      <div class="map-canvas">
+        <KakaoMapView
+          :stations="store.stations"
+          :selected-station="store.selectedStation"
+          :center="store.mapCenter"
+          :show-center-marker="false"
+          @select-station="store.selectStation"
+        />
       </div>
-      <button class="refresh-btn" :disabled="store.loading" @click="store.loadRadiusStations">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" :class="{ spinning: store.loading }">
-          <path d="M23 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M1 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>{{ store.loading ? '검색 중' : '새로고침' }}</span>
-      </button>
-    </div>
 
-    <!-- 지도 -->
-    <section class="map-section">
-      <KakaoMapView
+      <!-- 상단 플로팅 바 -->
+      <div class="top-bar">
+        <div class="top-info">
+          <span class="top-title">주변 주유소</span>
+          <span class="top-sub">
+            <template v-if="store.loading">검색 중...</template>
+            <template v-else-if="store.stations.length > 0">{{ store.stations.length }}곳 검색됨</template>
+            <template v-else>현재 위치 기준 3km</template>
+          </span>
+        </div>
+        <button class="refresh-btn" :disabled="store.loading" @click="store.loadRadiusStations">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" :class="{ spinning: store.loading }">
+            <path d="M23 4v6h-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 20v-6h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ store.loading ? '검색 중' : '새로고침' }}
+        </button>
+      </div>
+
+      <!-- 로딩 오버레이 -->
+      <Transition name="fade">
+        <div v-if="store.loading" class="loading-overlay">
+          <div class="loading-spinner" />
+          <span class="loading-text">주변 주유소 찾는 중...</span>
+        </div>
+      </Transition>
+
+      <!-- 에러 토스트 -->
+      <Transition name="slide-down">
+        <div v-if="store.error && !store.loading" class="error-toast">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <span class="error-msg">{{ store.error }}</span>
+          <button class="error-retry" @click="store.loadRadiusStations">재시도</button>
+        </div>
+      </Transition>
+
+      <!-- 빈 상태 -->
+      <Transition name="fade">
+        <div v-if="!store.loading && !store.error && store.stations.length === 0" class="empty-card">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#9ca3af" stroke-width="2"/>
+            <circle cx="12" cy="9" r="2.5" stroke="#9ca3af" stroke-width="2"/>
+          </svg>
+          <div>
+            <p class="empty-title">주변에 주유소가 없습니다</p>
+            <p class="empty-sub">검색 반경을 늘리거나 다른 위치에서 시도해 주세요</p>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- 바텀시트 -->
+      <StationBottomSheet
+        v-if="store.stations.length > 0 && !store.loading"
+        ref="bottomSheetRef"
         :stations="store.stations"
-        :selected-station="store.selectedStation"
-        :center="store.mapCenter"
+        :expanded="false"
+        mode="radius"
         @select-station="store.selectStation"
       />
-    </section>
 
-    <!-- 로딩 스켈레톤 -->
-    <div v-if="store.loading" class="card-list">
-      <div v-for="i in 3" :key="i" class="skeleton-card">
-        <div class="skel skel-title" />
-        <div class="skel skel-meta" />
-        <div class="skel-prices">
-          <div class="skel skel-price" />
-          <div class="skel skel-price" />
-        </div>
-      </div>
-    </div>
-
-    <!-- 에러 -->
-    <div v-else-if="store.error" class="state-box error">
-      <div class="state-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="2"/>
-          <line x1="12" y1="8" x2="12" y2="12" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
-          <line x1="12" y1="16" x2="12.01" y2="16" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <p class="state-title">검색 실패</p>
-      <p class="state-desc">{{ store.error }}</p>
-      <button class="retry-btn" @click="store.loadRadiusStations">다시 시도</button>
-    </div>
-
-    <!-- 빈 상태 -->
-    <div v-else-if="store.stations.length === 0 && !store.loading" class="state-box">
-      <div class="state-icon">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#9ca3af" stroke-width="2"/>
-          <circle cx="12" cy="9" r="2.5" stroke="#9ca3af" stroke-width="2"/>
-        </svg>
-      </div>
-      <p class="state-title">주변 주유소 없음</p>
-      <p class="state-desc">검색 반경을 늘려보거나<br />다른 위치에서 시도해 주세요</p>
-    </div>
-
-    <!-- 카드 리스트 -->
-    <section v-else class="card-list">
-      <p class="result-count">
-        <strong>{{ store.stations.length }}곳</strong> 검색됨
-      </p>
-      <StationCard
-        v-for="station in store.stations"
-        :key="station.id"
-        :station="station"
-        @select="store.selectStation"
+      <!-- 상세 시트 -->
+      <StationDetailSheet
+        mode="nearby"
+        :station="store.selectedStation"
+        @close="store.selectedStation = null"
       />
-    </section>
-
-    <!-- 상세 시트 -->
-    <StationDetailSheet
-      mode="nearby"
-      :station="store.selectedStation"
-      @close="store.selectedStation = null"
-      @route-ready="handleRouteReady"
-    />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import KakaoMapView from '@/components/KakaoMapView.vue'
-import StationCard from '@/components/StationCard.vue'
+import StationBottomSheet from '@/components/StationBottomSheet.vue'
 import StationDetailSheet from '@/components/StationDetailSheet.vue'
 import { useNearbyStore } from '@/stores/nearby'
+import { useNoBodyScroll } from '@/composables/useNoBodyScroll'
 
 const store = useNearbyStore()
-const nearbyRoutePath = ref<{ lat: number; lng: number }[]>([])
+const bottomSheetRef = ref(null)
 
-function handleRouteReady(path: { lat: number; lng: number }[]) {
-  nearbyRoutePath.value = path
-  store.selectedStation = null
-}
+useNoBodyScroll()
 
 onMounted(() => {
   store.loadRadiusStations()
@@ -108,43 +106,71 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.nearby-page {
-  padding: calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+.page {
+  min-height: 100dvh;
 }
 
-.page-header {
+.map-area {
+  position: relative;
+  height: calc(100dvh - 78px);
+  overflow: hidden;
+}
+
+.map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* 상단 플로팅 바 */
+.top-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.page-title {
-  margin: 0;
-  font-size: 26px;
+.top-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top-title {
+  font-size: 15px;
   font-weight: 900;
-  letter-spacing: -0.5px;
+  color: var(--color-gray-900);
 }
 
-.page-sub {
-  margin: 4px 0 0;
+.top-sub {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--color-gray-400);
-  font-size: 13px;
 }
 
 .refresh-btn {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
   border: 0;
   border-radius: var(--radius-md);
   background: var(--color-gray-100);
   color: var(--color-gray-700);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 10px 14px;
+  padding: 8px 12px;
   transition: background var(--transition-fast);
-  flex-shrink: 0;
 }
 
 .refresh-btn:active {
@@ -164,118 +190,121 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.map-section {
-  position: relative;
-  height: 260px;
-  margin-top: 16px;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-.result-count {
-  margin: 0 0 12px;
-  font-size: 14px;
-  color: var(--color-gray-500);
-}
-
-.result-count strong {
-  color: var(--color-primary);
-}
-
-.card-list {
-  margin-top: 20px;
+/* 로딩 오버레이 */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-/* 스켈레톤 */
-.skeleton-card {
-  background: white;
-  border-radius: var(--radius-xl);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-}
-
-.skel {
-  border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.skel-title {
-  height: 18px;
-  width: 55%;
-  margin-bottom: 8px;
-}
-
-.skel-meta {
-  height: 13px;
-  width: 40%;
-  margin-bottom: 14px;
-}
-
-.skel-prices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.skel-price {
-  height: 52px;
-  border-radius: var(--radius-md);
-}
-
-/* 상태 박스 */
-.state-box {
-  margin-top: 40px;
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.state-box.error .state-title {
-  color: var(--color-danger);
-}
-
-.state-icon {
-  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.state-title {
-  margin: 0 0 8px;
-  font-size: 18px;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-gray-200);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-gray-600);
+}
+
+/* 에러 토스트 */
+.error-toast {
+  position: absolute;
+  top: 80px;
+  left: 16px;
+  right: 16px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  box-shadow: var(--shadow-md);
+}
+
+.error-msg {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.error-retry {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: #dc2626;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+/* 빈 상태 카드 */
+.empty-card {
+  position: absolute;
+  bottom: 110px;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: var(--shadow-lg);
+}
+
+.empty-title {
+  margin: 0 0 3px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--color-gray-700);
 }
 
-.state-desc {
-  margin: 0 0 20px;
+.empty-sub {
+  margin: 0;
+  font-size: 12px;
   color: var(--color-gray-400);
-  font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
-.retry-btn {
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-danger);
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 12px 24px;
-  transition: opacity var(--transition-fast);
+/* 트랜지션 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.retry-btn:active {
-  opacity: 0.8;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

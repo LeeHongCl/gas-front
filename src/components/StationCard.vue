@@ -1,49 +1,18 @@
 <template>
   <article class="card" @click="$emit('select', station)">
-    <div class="card-top">
-      <div class="card-info">
-        <div class="name-row">
-          <span class="brand-badge" :style="brandStyle">{{ station.brand }}</span>
-        </div>
-        <h3 class="title">{{ station.name }}</h3>
-        <p class="meta">{{ truncateAddress(station.address) }}</p>
-      </div>
-      <div class="right-col">
-        <span class="distance">{{ formatDistance(station.distance) }}</span>
-        <button
-          class="fav-btn"
-          :class="{ active: station.favorite }"
-          aria-label="즐겨찾기"
-          @click.stop
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-              :fill="station.favorite ? 'currentColor' : 'none'"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
+    <!-- 1줄: 순위 + 브랜드 + 이름 -->
+    <div class="row1">
+      <span v-if="rank" class="rank-badge" :style="{ background: rankColor }">{{ rank }}</span>
+      <span class="brand-badge" :style="brandStyle">{{ station.brand }}</span>
+      <h3 class="title">{{ station.name }}</h3>
     </div>
-
-    <div class="price-row">
-      <div class="price-box gasoline">
-        <span class="label">휘발유</span>
-        <strong class="price">{{ station.gasolinePrice.toLocaleString() }}<em>원/L</em></strong>
-      </div>
-      <div class="price-box diesel">
-        <span class="label">경유</span>
-        <strong class="price">{{ station.dieselPrice.toLocaleString() }}<em>원/L</em></strong>
-      </div>
-    </div>
-
-    <div v-if="hasTags" class="tag-row">
-      <span v-if="station.isSelf" class="tag self">셀프</span>
-      <span v-if="station.hasCarWash" class="tag wash">세차</span>
-      <span v-if="station.hasStore" class="tag store">편의점</span>
+    <!-- 2줄: 유종 가격 + 거리 -->
+    <div class="row2">
+      <span class="fuel-price">
+        {{ fuelLabel }} <strong>{{ displayPrice.toLocaleString() }}</strong><em>원/L</em>
+      </span>
+      <span v-if="formatDistance(station.distance)" class="sep">·</span>
+      <span v-if="formatDistance(station.distance)" class="distance">{{ formatDistance(station.distance) }}</span>
     </div>
   </article>
 </template>
@@ -51,21 +20,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { GasStation } from '@/types/gasStation'
+import { useAuthStore } from '@/stores/auth'
 
-const props = defineProps<{ station: GasStation; mode?: 'radius' | 'route' }>()
+const props = defineProps<{
+  station: GasStation
+  mode?: 'radius' | 'route'
+  rank?: number
+}>()
 
 defineEmits<{ (e: 'select', station: GasStation): void }>()
 
-const hasTags = computed(
-  () => props.station.isSelf || props.station.hasCarWash || props.station.hasStore,
+const auth = useAuthStore()
+const fuelType = computed(() => auth.profile.value.fuelType ?? 'GASOLINE')
+const fuelLabel = computed(() => fuelType.value === 'DIESEL' ? '경유' : '휘발유')
+const displayPrice = computed(() =>
+  fuelType.value === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
+)
+
+const RANK_COLORS = ['#2563eb', '#ea580c', '#16a34a']
+
+const rankColor = computed(() =>
+  props.rank ? (RANK_COLORS[props.rank - 1] ?? '#6b7280') : ''
 )
 
 const BRAND_COLORS: Record<string, { bg: string; color: string }> = {
-  SK: { bg: '#fff0e6', color: '#ea580c' },
-  GS: { bg: '#fef9c3', color: '#ca8a04' },
-  현대: { bg: '#eff6ff', color: '#1d4ed8' },
+  SK:   { bg: '#fff0e6', color: '#ea580c' },
+  GS:   { bg: '#fef9c3', color: '#ca8a04' },
+  현대:  { bg: '#eff6ff', color: '#1d4ed8' },
   S오일: { bg: '#fef2f2', color: '#dc2626' },
-  알뜰: { bg: '#f0fdf4', color: '#16a34a' },
+  알뜰:  { bg: '#f0fdf4', color: '#16a34a' },
 }
 
 const brandStyle = computed(() => {
@@ -75,18 +58,12 @@ const brandStyle = computed(() => {
 })
 
 function formatDistance(distance?: number) {
-  if (distance == null) return '-'
+  if (distance == null) return ''
   if (props.mode === 'route') {
-    const meters = Math.round(distance * 1000)
-    return `우회거리: ${meters.toLocaleString()}m`
+    return `우회거리 ${distance.toFixed(1)}km`
   }
   if (distance < 1) return `${Math.round(distance * 1000)}m`
   return `${distance.toFixed(1)}km`
-}
-
-function truncateAddress(address: string) {
-  if (!address) return ''
-  return address.split(' ').slice(0, 3).join(' ')
 }
 </script>
 
@@ -94,11 +71,14 @@ function truncateAddress(address: string) {
 .card {
   background: white;
   border-radius: var(--radius-xl);
-  padding: 16px;
+  padding: 11px 14px;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .card:active {
@@ -106,34 +86,41 @@ function truncateAddress(address: string) {
   box-shadow: 0 1px 4px rgba(17, 24, 39, 0.06);
 }
 
-.card-top {
+/* ── 1줄 ── */
+.row1 {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.card-info {
-  flex: 1;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
 }
 
-.name-row {
-  margin-bottom: 6px;
+.rank-badge {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: white;
+  line-height: 1;
 }
 
 .brand-badge {
-  display: inline-block;
-  padding: 2px 8px;
+  flex-shrink: 0;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.2px;
 }
 
 .title {
+  flex: 1;
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
@@ -141,87 +128,27 @@ function truncateAddress(address: string) {
   color: var(--color-gray-900);
 }
 
-.meta {
-  margin: 4px 0 0;
-  color: var(--color-gray-400);
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.right-col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.distance {
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.fav-btn {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--color-gray-200);
-  border-radius: 50%;
-  background: white;
+/* ── 2줄 ── */
+.row2 {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--color-gray-300);
-  transition: all var(--transition-fast);
+  gap: 6px;
+  padding-left: 2px;
 }
 
-.fav-btn.active {
-  color: #e11d48;
-  border-color: #fce7f3;
-  background: #fff1f2;
+.fuel-price {
+  font-size: 12px;
+  color: var(--color-gray-600);
+  font-weight: 600;
 }
 
-.fav-btn:active {
-  transform: scale(0.9);
-}
-
-.price-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.price-box {
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-}
-
-.price-box.gasoline {
-  background: #eff6ff;
-}
-
-.price-box.diesel {
-  background: #f0fdf4;
-}
-
-.label {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-gray-500);
-}
-
-.price {
-  font-size: 15px;
+.fuel-price strong {
+  font-size: 13px;
   font-weight: 800;
   color: var(--color-gray-900);
 }
 
-.price em {
+.fuel-price em {
   font-size: 10px;
   font-weight: 600;
   font-style: normal;
@@ -229,32 +156,16 @@ function truncateAddress(address: string) {
   margin-left: 1px;
 }
 
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 10px;
-}
-
-.tag {
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
+.sep {
+  color: var(--color-gray-300);
   font-size: 11px;
+  line-height: 1;
+}
+
+.distance {
+  font-size: 12px;
   font-weight: 700;
-}
-
-.tag.self {
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-.tag.wash {
-  background: #f0f9ff;
-  color: #0369a1;
-}
-
-.tag.store {
-  background: #fdf4ff;
-  color: #7e22ce;
+  color: var(--color-primary);
+  white-space: nowrap;
 }
 </style>

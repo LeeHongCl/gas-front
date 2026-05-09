@@ -103,11 +103,13 @@ export const useNearbyStore = defineStore('nearby', () => {
       const auth = useAuthStore()
       const fuelEfficiency = Number(auth.profile.value.fuelEfficiency) || 12
 
+      const fuelType = (auth.profile.value.fuelType ?? 'GASOLINE') as 'GASOLINE' | 'DIESEL'
+
       const response = await fetchRadiusRecommendations({
         latitude: center.lat,
         longitude: center.lng,
         radius: 3000,
-        fuelType: 'GASOLINE',
+        fuelType,
         refuelLiters: 40,
         fuelEfficiency,
         limit: 3,

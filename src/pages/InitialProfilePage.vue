@@ -52,6 +52,28 @@
         </div>
       </label>
 
+      <div class="field">
+        <span class="field-label">주유 유종</span>
+        <div class="fuel-toggle">
+          <button
+            type="button"
+            class="fuel-opt"
+            :class="{ active: fuelType === 'GASOLINE' }"
+            @click="fuelType = 'GASOLINE'"
+          >
+            휘발유
+          </button>
+          <button
+            type="button"
+            class="fuel-opt"
+            :class="{ active: fuelType === 'DIESEL' }"
+            @click="fuelType = 'DIESEL'"
+          >
+            경유
+          </button>
+        </div>
+      </div>
+
       <button class="primary-btn" @click="handleComplete">입력 완료</button>
       <button class="skip-btn" @click="handleSkip">지금은 건너뛰기</button>
     </div>
@@ -68,11 +90,12 @@ const auth = useAuthStore()
 
 const carModel = ref('')
 const fuelEfficiency = ref('')
+const fuelType = ref<'GASOLINE' | 'DIESEL'>('GASOLINE')
 const carFocused = ref(false)
 const effFocused = ref(false)
 
 function handleComplete() {
-  auth.completeInitialProfile({ carModel: carModel.value, fuelEfficiency: fuelEfficiency.value })
+  auth.completeInitialProfile({ carModel: carModel.value, fuelEfficiency: fuelEfficiency.value, fuelType: fuelType.value })
   router.push('/app')
 }
 
@@ -185,6 +208,30 @@ function handleSkip() {
   font-weight: 600;
   color: var(--color-gray-400);
   flex-shrink: 0;
+}
+
+.fuel-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fuel-opt {
+  height: 48px;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-50);
+  color: var(--color-gray-500);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fuel-opt.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
 }
 
 .primary-btn {

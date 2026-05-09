@@ -22,11 +22,25 @@
 
       <!-- 🔵 추천 모드 -->
       <template v-if="routeStore.pageMode === 'planning'">
+
+        <!-- 에러 토스트 -->
+        <Transition name="slide-down">
+          <div v-if="routeStore.error && !routeStore.loading" class="error-toast">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <span class="error-msg">{{ routeStore.error }}</span>
+          </div>
+        </Transition>
+
         <div class="top-panel">
           <RoutePointForm
             :origin="routeStore.origin"
             :destination="routeStore.destination"
             :loading="routeStore.loading"
+            :has-results="routeStore.recommendedStations.length > 0"
             @update-origin="routeStore.setOrigin"
             @update-destination="routeStore.setDestination"
             @search-route="routeStore.loadRouteRecommendations"
@@ -82,6 +96,7 @@
           ref="bottomSheetRef"
           :stations="routeStore.recommendedStations"
           :expanded="sheetExpanded"
+          :snap-height="compareSnapHeight"
           mode="route"
           @toggle-expand="sheetExpanded = !sheetExpanded"
           @select-station="routeStore.selectRecommendedStation"
@@ -160,9 +175,12 @@ import StationBottomSheet from '@/components/StationBottomSheet.vue'
 import StationDetailSheet from '@/components/StationDetailSheet.vue'
 import RoutePointForm from '@/components/route/RoutePointForm.vue'
 import { useRouteStore } from '@/stores/route'
+import { useNoBodyScroll } from '@/composables/useNoBodyScroll'
 
 const routeStore = useRouteStore()
 const ROUTE_COLORS = ['#2563eb', '#ea580c', '#16a34a']
+
+useNoBodyScroll()
 const sheetExpanded = ref(true)
 const navigatingToDestination = ref(false)
 const activeRouteStationId = ref<string | null>(null)
@@ -171,6 +189,18 @@ function toggleActiveRoute(stationId: string) {
   activeRouteStationId.value = activeRouteStationId.value === stationId ? null : stationId
 }
 const bottomSheetRef = ref<{ sheetHeight: number } | null>(null)
+
+// 카드 높이 상수 (StationCard 실제 렌더 크기 기반)
+const CARD_HEIGHT = 65   // padding(22) + row1(20) + gap(5) + row2(18)
+const CARD_GAP    = 10   // station-list gap
+const SHEET_CHROME = 74  // handle-wrap(22) + header(44) + list 상단 여유
+const BOTTOM_PAD   = 24  // sheet padding-bottom
+
+const compareSnapHeight = computed<number | undefined>(() => {
+  if (routeStore.allRoutePaths.length === 0) return undefined
+  const count = Math.min(routeStore.recommendedStations.length, 2)
+  return SHEET_CHROME + count * CARD_HEIGHT + (count - 1) * CARD_GAP + BOTTOM_PAD
+})
 
 const compareBarBottom = computed(() => {
   const sheetH = bottomSheetRef.value?.sheetHeight ?? 220
@@ -331,6 +361,41 @@ onUnmounted(() => {
 }
 
 .exit-nav-btn:active { opacity: 0.8; }
+
+.error-toast {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.error-msg {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 
 .compare-bar {
   position: absolute;

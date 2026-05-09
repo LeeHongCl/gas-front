@@ -201,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { RoutePoint } from '@/stores/route'
 import { searchKakaoPlaces, geocodeAddress, type KakaoPlaceResult } from '@/utils/kakaoPlaceSearch'
 import { getAppCurrentLocation } from '@/utils/location'
@@ -210,6 +210,7 @@ const props = defineProps<{
   origin: RoutePoint | null
   destination: RoutePoint | null
   loading: boolean
+  hasResults?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -221,6 +222,12 @@ const emit = defineEmits<{
 
 // ── 접기/펼치기 ───────────────────────────────────
 const collapsed = ref(false)
+
+watch(() => props.loading, (newVal, oldVal) => {
+  if (oldVal === true && newVal === false && props.hasResults) {
+    collapsed.value = true
+  }
+})
 
 // ── 모드 ──────────────────────────────────────────
 type InputMode = 'search' | 'address' | 'current'
@@ -353,6 +360,7 @@ function clearAll() {
   clearOrigin()
   clearDestination()
   searchError.value = ''
+  collapsed.value = false
   emit('clear-route')
 }
 </script>

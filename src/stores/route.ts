@@ -291,14 +291,19 @@
         console.log('보정 전:', origin.value.lat, origin.value.lng, '→ 보정 후:', snappedOrigin)
         console.log('보정 전:', destination.value.lat, destination.value.lng, '→ 보정 후:', snappedDestination)
 
+        const { useAuthStore } = await import('@/stores/auth')
+        const auth = useAuthStore()
+        const fuelType = (auth.profile.value.fuelType ?? 'GASOLINE') as 'GASOLINE' | 'DIESEL'
+        const fuelEfficiency = Number(auth.profile.value.fuelEfficiency) || 12
+
         const response = await fetchRouteRecommendations({
           originLatitude: snappedOrigin.lat,
           originLongitude: snappedOrigin.lng,
           destinationLatitude: snappedDestination.lat,
           destinationLongitude: snappedDestination.lng,
-          fuelType: 'GASOLINE',
+          fuelType,
           refuelLiters: 40,
-          fuelEfficiency: 12,
+          fuelEfficiency,
           limit: 3,
         })
 

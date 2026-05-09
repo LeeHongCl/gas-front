@@ -31,10 +31,11 @@
         <span>검색 결과가 없습니다</span>
       </div>
       <StationCard
-        v-for="station in stations"
+        v-for="(station, index) in stations"
         :key="station.id"
         :station="station"
         :mode="mode"
+        :rank="mode === 'route' ? index + 1 : undefined"
         @select="$emit('select-station', $event)"
       />
     </div>
@@ -42,14 +43,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { GasStation } from '@/types/gasStation'
 import StationCard from './StationCard.vue'
 
-defineProps<{
+const props = defineProps<{
   stations: GasStation[]
   expanded: boolean
   mode?: 'radius' | 'route'
+  snapHeight?: number
 }>()
 
 defineEmits<{
@@ -59,9 +61,9 @@ defineEmits<{
 
 const sheetRef = ref<HTMLElement | null>(null)
 
-const MIN_HEIGHT = 150
+const MIN_HEIGHT = 88
 const getMaxHeight = () => window.innerHeight * 0.78
-const getDefaultHeight = () => window.innerHeight * 0.40
+const getDefaultHeight = () => window.innerHeight * 0.30
 
 const sheetHeight = ref(0)
 const isDragging = ref(false)
@@ -71,6 +73,10 @@ let dragStartHeight = 0
 
 onMounted(() => {
   sheetHeight.value = getDefaultHeight()
+})
+
+watch(() => props.snapHeight, (h) => {
+  if (h != null) sheetHeight.value = h
 })
 
 function startDrag(e: MouseEvent | TouchEvent) {
@@ -97,13 +103,14 @@ function onDrag(e: MouseEvent | TouchEvent) {
 function endDrag() {
   isDragging.value = false
 
-  const snapMid = (MIN_HEIGHT + getMaxHeight()) / 2
-  if (sheetHeight.value < MIN_HEIGHT + 60) {
+  const def = getDefaultHeight()
+  const max = getMaxHeight()
+  if (sheetHeight.value < MIN_HEIGHT + 40) {
     sheetHeight.value = MIN_HEIGHT
-  } else if (sheetHeight.value < snapMid) {
-    sheetHeight.value = getDefaultHeight()
+  } else if (sheetHeight.value < (def + max) / 2) {
+    sheetHeight.value = def
   } else {
-    sheetHeight.value = getMaxHeight()
+    sheetHeight.value = max
   }
 
   window.removeEventListener('mousemove', onDrag)
@@ -131,7 +138,7 @@ defineExpose({ sheetHeight })
   z-index: 45;
   display: flex;
   flex-direction: column;
-  min-height: 150px;
+  min-height: 88px;
   padding: 0 16px calc(16px + env(safe-area-inset-bottom));
   border-top-left-radius: var(--radius-2xl);
   border-top-right-radius: var(--radius-2xl);

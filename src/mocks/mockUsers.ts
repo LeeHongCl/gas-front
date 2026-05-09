@@ -5,6 +5,7 @@ export interface MockUser {
   password: string
   carModel: string
   fuelEfficiency: string
+  fuelType: 'GASOLINE' | 'DIESEL'
   hasCompletedInitialProfile: boolean
 }
 
@@ -16,6 +17,7 @@ export const mockUsers: MockUser[] = [
     password: '1234',
     carModel: '아반떼',
     fuelEfficiency: '14.8',
+    fuelType: 'GASOLINE',
     hasCompletedInitialProfile: true,
   },
   {
@@ -25,6 +27,7 @@ export const mockUsers: MockUser[] = [
     password: '1234',
     carModel: '',
     fuelEfficiency: '',
+    fuelType: 'GASOLINE',
     hasCompletedInitialProfile: false,
   },
   {
@@ -34,6 +37,7 @@ export const mockUsers: MockUser[] = [
     password: '1234',
     carModel: '쏘나타',
     fuelEfficiency: '11.9',
+    fuelType: 'DIESEL',
     hasCompletedInitialProfile: true,
   },
 ]

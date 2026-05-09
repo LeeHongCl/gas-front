@@ -55,6 +55,24 @@
           </div>
         </label>
 
+        <div class="field">
+          <span class="field-label">주유 유종</span>
+          <div class="fuel-toggle">
+            <button
+              type="button"
+              class="fuel-opt"
+              :class="{ active: fuelType === 'GASOLINE' }"
+              @click="fuelType = 'GASOLINE'"
+            >휘발유</button>
+            <button
+              type="button"
+              class="fuel-opt"
+              :class="{ active: fuelType === 'DIESEL' }"
+              @click="fuelType = 'DIESEL'"
+            >경유</button>
+          </div>
+        </div>
+
         <Transition name="slide-ok">
           <p v-if="savedMessage" class="saved-msg">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -110,6 +128,7 @@ const router = useRouter()
 
 const carModel = ref('')
 const fuelEfficiency = ref('')
+const fuelType = ref<'GASOLINE' | 'DIESEL'>('GASOLINE')
 const savedMessage = ref('')
 const carFocused = ref(false)
 const effFocused = ref(false)
@@ -117,10 +136,11 @@ const effFocused = ref(false)
 watchEffect(() => {
   carModel.value = auth.profile.value.carModel
   fuelEfficiency.value = auth.profile.value.fuelEfficiency
+  fuelType.value = auth.profile.value.fuelType ?? 'GASOLINE'
 })
 
 function handleSave() {
-  auth.updateProfile({ carModel: carModel.value, fuelEfficiency: fuelEfficiency.value })
+  auth.updateProfile({ carModel: carModel.value, fuelEfficiency: fuelEfficiency.value, fuelType: fuelType.value })
   savedMessage.value = '저장되었습니다.'
   setTimeout(() => { savedMessage.value = '' }, 2000)
 }
@@ -249,6 +269,30 @@ function handleLogout() {
   font-weight: 600;
   color: var(--color-gray-400);
   flex-shrink: 0;
+}
+
+.fuel-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fuel-opt {
+  height: 46px;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
+  color: var(--color-gray-500);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fuel-opt.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
 }
 
 .saved-msg {

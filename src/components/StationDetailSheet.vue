@@ -58,74 +58,79 @@
           <span>{{ station.tel }}</span>
         </div>
 
-        <!-- 액션 버튼 -->
-        <div class="action-row" :class="{ 'action-row--single': !(mode === 'route' && routeStore.origin && routeStore.destination) }">
+        <!-- 경로 미리보기 (route 모드만) -->
+        <button
+          v-if="mode === 'route' && routeStore.origin && routeStore.destination"
+          type="button"
+          class="action-btn preview-btn"
+          :disabled="isPreviewLoading"
+          @click.stop="handlePreview"
+        >
+          <svg v-if="isPreviewLoading" width="17" height="17" viewBox="0 0 24 24" fill="none" class="spin">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10"/>
+          </svg>
+          <svg v-else width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <path d="M3 12h18M3 6l9-4 9 4M3 18l9 4 9-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ isPreviewLoading ? '경로 계산 중...' : '경로 미리보기' }}
+        </button>
+
+        <!-- 내비/전화 아이콘 버튼 그리드 -->
+        <div class="navi-grid">
           <a
-            class="action-btn secondary"
+            class="navi-icon-btn"
             :class="{ disabled: !station.tel }"
             :href="station.tel ? `tel:${station.tel}` : undefined"
             @click.stop
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            전화
+            <span class="navi-icon-wrap phone-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="navi-icon-label">전화</span>
           </a>
-          <button
-            v-if="mode === 'route' && routeStore.origin && routeStore.destination"
-            type="button"
-            class="action-btn preview-btn"
-            :disabled="isPreviewLoading"
-            @click.stop="handlePreview"
-          >
-            <svg v-if="isPreviewLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" class="spin">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-dasharray="31.4" stroke-dashoffset="10"/>
-            </svg>
-            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M3 12h18M3 6l9-4 9 4M3 18l9 4 9-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            {{ isPreviewLoading ? '경로 계산 중...' : '경로 미리보기' }}
-          </button>
-        </div>
 
-        <!-- 내비 버튼 -->
-        <div class="navi-row">
-          <button
-            type="button"
-            class="action-btn kakao-btn"
-            @click.stop.prevent="handleKakaoNavi"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
-            </svg>
-            카카오내비
+          <button type="button" class="navi-icon-btn" @click.stop.prevent="handleKakaoNavi">
+            <span class="navi-icon-wrap kakao-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="#3C1E1E" stroke-width="2" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </span>
+            <span class="navi-icon-label">카카오내비</span>
           </button>
+
           <button
             type="button"
-            class="action-btn naver-btn"
-            :class="{ 'naver-disabled': isMobile && mode === 'route' }"
+            class="navi-icon-btn"
+            :class="{ disabled: isMobile && mode === 'route' }"
             :disabled="isMobile && mode === 'route'"
             :title="isMobile && mode === 'route' ? '경유지 포함 경로는 네이버 지도에서 지원되지 않습니다' : undefined"
             @click.stop.prevent="handleNaverMap"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
-            </svg>
-            네이버지도
+            <span class="navi-icon-wrap naver-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </span>
+            <span class="navi-icon-label">네이버지도</span>
+          </button>
+
+          <button
+            type="button"
+            class="navi-icon-btn"
+            :class="{ disabled: !isMobile }"
+            :disabled="!isMobile"
+            @click.stop.prevent="handleTmapNavi"
+          >
+            <span class="navi-icon-wrap tmap-wrap">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </span>
+            <span class="navi-icon-label">{{ isIOS ? 'Apple Maps' : 'T map' }}</span>
           </button>
         </div>
-        <button
-          type="button"
-          class="action-btn tmap-btn"
-          :class="{ 'tmap-disabled': !isMobile }"
-          :disabled="!isMobile"
-          @click.stop.prevent="handleTmapNavi"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
-          </svg>
-          {{ isIOS ? 'Apple Maps' : 'T map' }}{{ !isMobile ? ' (모바일 전용)' : '' }}
-        </button>
 
         <!-- 미리보기 에러 -->
         <p v-if="previewError" class="preview-error">{{ previewError }}</p>
@@ -539,21 +544,27 @@ function formatDistance(distance?: number) {
   flex-shrink: 0;
 }
 
-.action-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.action-row--single {
-  grid-template-columns: 1fr;
-}
-
 .action-btn.preview-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
   box-shadow: var(--shadow-blue);
+  margin-top: 18px;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.action-btn.preview-btn:active {
+  transform: scale(0.98);
 }
 
 .action-btn.preview-btn:disabled {
@@ -570,69 +581,55 @@ function formatDistance(distance?: number) {
   to   { transform: rotate(360deg); }
 }
 
-.navi-row {
+/* 내비 아이콘 그리드 */
+.navi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.action-btn {
-  display: inline-flex;
+.navi-icon-btn {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 56px;
+  gap: 6px;
   border: 0;
-  border-radius: var(--radius-lg);
-  font-size: 15px;
-  font-weight: 800;
+  background: transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  padding: 4px 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
-.action-btn:active {
-  transform: scale(0.97);
+.navi-icon-btn:active {
+  transform: scale(0.92);
 }
 
-.action-btn.secondary {
-  background: var(--color-gray-100);
-  color: var(--color-gray-800);
-}
-
-.action-btn.secondary.disabled {
-  opacity: 0.4;
+.navi-icon-btn.disabled {
+  opacity: 0.35;
   pointer-events: none;
 }
 
-.action-btn.primary {
-  background: var(--color-primary);
-  color: white;
-  box-shadow: var(--shadow-blue);
+.navi-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.action-btn.kakao-btn {
-  background: #FAE100;
-  color: #3C1E1E;
-}
+.phone-wrap  { background: var(--color-gray-100); color: var(--color-gray-700); }
+.kakao-wrap  { background: #FAE100; }
+.naver-wrap  { background: #03C75A; }
+.tmap-wrap   { background: #E84118; }
 
-.action-btn.naver-btn {
-  background: #03C75A;
-  color: white;
-}
-
-.action-btn.tmap-btn {
-  width: 100%;
-  margin-top: 8px;
-  background: #E84118;
-  color: white;
-}
-
-.action-btn.tmap-disabled,
-.action-btn.naver-disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.navi-icon-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-gray-600);
+  white-space: nowrap;
 }
 
 .preview-error {

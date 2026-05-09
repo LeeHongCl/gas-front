@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string
   carModel: string
   fuelEfficiency: string
+  fuelType: 'GASOLINE' | 'DIESEL'
 }
 
 const STORAGE_KEY = 'gasstation-auth'
@@ -23,6 +24,7 @@ function getDefaultProfile(): UserProfile {
     email: '',
     carModel: '',
     fuelEfficiency: '',
+    fuelType: 'GASOLINE',
   }
 }
 
@@ -111,6 +113,7 @@ function login(email: string, password: string) {
     email: foundUser.email,
     carModel: foundUser.carModel,
     fuelEfficiency: foundUser.fuelEfficiency,
+    fuelType: foundUser.fuelType ?? 'GASOLINE',
   }
 }
 
@@ -151,18 +154,20 @@ function signUp(payload: { name: string; email: string; password: string }) {
   }
 }
 
-function completeInitialProfile(payload: { carModel: string; fuelEfficiency: string }) {
+function completeInitialProfile(payload: { carModel: string; fuelEfficiency: string; fuelType: 'GASOLINE' | 'DIESEL' }) {
   hasCompletedInitialProfile.value = true
   profile.value = {
     ...profile.value,
     carModel: payload.carModel,
     fuelEfficiency: payload.fuelEfficiency,
+    fuelType: payload.fuelType,
   }
 
   const foundUser = users.value.find((user) => user.email === profile.value.email)
   if (foundUser) {
     foundUser.carModel = payload.carModel
     foundUser.fuelEfficiency = payload.fuelEfficiency
+    foundUser.fuelType = payload.fuelType
     foundUser.hasCompletedInitialProfile = true
     saveMockUsers()
   }
@@ -189,6 +194,7 @@ function updateProfile(payload: Partial<UserProfile>) {
     foundUser.name = profile.value.name
     foundUser.carModel = profile.value.carModel
     foundUser.fuelEfficiency = profile.value.fuelEfficiency
+    foundUser.fuelType = profile.value.fuelType
     saveMockUsers()
   }
 }
