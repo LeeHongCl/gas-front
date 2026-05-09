@@ -138,6 +138,7 @@ function signUp(payload: { name: string; email: string; password: string }) {
     password: payload.password,
     carModel: '',
     fuelEfficiency: '',
+    fuelType: 'GASOLINE',
     hasCompletedInitialProfile: false,
   }
 
@@ -151,6 +152,7 @@ function signUp(payload: { name: string; email: string; password: string }) {
     email: newUser.email,
     carModel: '',
     fuelEfficiency: '',
+    fuelType: 'GASOLINE',
   }
 }
 
