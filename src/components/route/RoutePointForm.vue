@@ -368,8 +368,8 @@ function clearAll() {
 <style scoped>
 .route-form-card {
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px 14px;
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.97);
   box-shadow: var(--shadow-lg);
@@ -449,7 +449,7 @@ function clearAll() {
 
 .field-group {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .field-header {
@@ -460,7 +460,7 @@ function clearAll() {
 }
 
 .field-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--color-gray-900);
   flex-shrink: 0;
@@ -468,7 +468,7 @@ function clearAll() {
 
 .mode-tabs {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .mode-tab {
@@ -478,7 +478,7 @@ function clearAll() {
   color: var(--color-gray-500);
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 8px;
+  padding: 4px 7px;
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--transition-fast), color var(--transition-fast);
@@ -496,8 +496,8 @@ function clearAll() {
 
 .field-input {
   flex: 1;
-  height: 44px;
-  padding: 0 12px;
+  height: 38px;
+  padding: 0 10px;
   border: 1.5px solid var(--color-gray-200);
   border-radius: var(--radius-md);
   background: white;
@@ -517,8 +517,8 @@ function clearAll() {
 }
 
 .field-btn {
-  min-width: 64px;
-  height: 44px;
+  min-width: 56px;
+  height: 38px;
   border: 0;
   border-radius: var(--radius-md);
   background: var(--color-gray-200);
@@ -540,16 +540,16 @@ function clearAll() {
 
 .result-list {
   display: grid;
-  gap: 6px;
-  max-height: 160px;
+  gap: 4px;
+  max-height: 110px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .result-item {
   display: grid;
-  gap: 2px;
-  padding: 10px 12px;
+  gap: 1px;
+  padding: 8px 10px;
   border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-md);
   background: white;
@@ -563,21 +563,21 @@ function clearAll() {
 }
 
 .result-item strong {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-gray-900);
   font-weight: 700;
 }
 
 .result-item span {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-gray-400);
 }
 
 .selected-badge {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 7px;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
   background: var(--color-primary-light);
 }
@@ -635,16 +635,16 @@ function clearAll() {
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .primary-btn,
 .secondary-btn {
   flex: 1;
-  height: 48px;
+  height: 42px;
   border: 0;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   cursor: pointer;
   transition: opacity var(--transition-fast), transform var(--transition-fast);
