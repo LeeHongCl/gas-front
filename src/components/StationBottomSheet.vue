@@ -139,7 +139,7 @@ defineExpose({ sheetHeight })
   display: flex;
   flex-direction: column;
   min-height: 88px;
-  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  padding: 0 16px 16px;
   border-top-left-radius: var(--radius-2xl);
   border-top-right-radius: var(--radius-2xl);
   background: rgba(255, 255, 255, 0.98);
