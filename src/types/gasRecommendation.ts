@@ -26,6 +26,7 @@ export interface RouteRecommendationItem {
   score: number;
   frontRoadSpeed: number;
   detourDistance: number;
+  durationSeconds?: number;
 }
 
 export interface RadiusRecommendationRequest {
