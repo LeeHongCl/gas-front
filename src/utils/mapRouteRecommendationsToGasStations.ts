@@ -4,7 +4,6 @@ import type { RouteRecommendationItem } from '@/types/gasRecommendation';
 export function mapRouteRecommendationsToGasStations(
   items: RouteRecommendationItem[],
 ): GasStation[] {
-  console.log('[map] raw items:', JSON.stringify(items.map(i => ({ name: i.name, distance: i.distance, durationSeconds: i.durationSeconds }))))
   return items.map((item) => ({
     id: item.opinetStationId,
     name: item.name,
