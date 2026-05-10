@@ -37,17 +37,10 @@
         </div>
 
         <!-- 가격 -->
-        <div class="price-grid">
-          <div class="price-box gasoline">
-            <span class="price-label">휘발유</span>
-            <strong class="price-value">{{ station.gasolinePrice.toLocaleString() }}</strong>
-            <span class="price-unit">원/L</span>
-          </div>
-          <div class="price-box diesel">
-            <span class="price-label">경유</span>
-            <strong class="price-value">{{ station.dieselPrice.toLocaleString() }}</strong>
-            <span class="price-unit">원/L</span>
-          </div>
+        <div class="price-box" :class="fuelType === 'DIESEL' ? 'diesel' : 'gasoline'">
+          <span class="price-label">{{ fuelType === 'DIESEL' ? '경유' : '휘발유' }}</span>
+          <strong class="price-value">{{ displayPrice.toLocaleString() }}</strong>
+          <span class="price-unit">원/L</span>
         </div>
 
         <!-- 전화번호 -->
@@ -154,9 +147,16 @@
 import { computed, ref } from 'vue'
 import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
+import { useAuthStore } from '@/stores/auth'
 import RoutePreviewModal from '@/components/RoutePreviewModal.vue'
 
 const routeStore = useRouteStore()
+const auth = useAuthStore()
+const fuelType = computed(() => auth.profile.value.fuelType ?? 'GASOLINE')
+const displayPrice = computed(() => {
+  if (!props.station) return 0
+  return fuelType.value === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
+})
 
 const props = defineProps<{
   station: GasStation | null
@@ -485,16 +485,10 @@ function formatDistance(distance?: number) {
   color: #7e22ce;
 }
 
-.price-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
-
 .price-box {
   border-radius: var(--radius-lg);
   padding: 14px;
+  margin-top: 16px;
 }
 
 .price-box.gasoline {
