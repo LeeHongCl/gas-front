@@ -11,8 +11,8 @@
       <span class="fuel-price">
         {{ fuelLabel }} <strong>{{ displayPrice.toLocaleString() }}</strong><em>원/L</em>
       </span>
-      <span v-if="formatDistance(station.distance)" class="sep">·</span>
-      <span v-if="formatDistance(station.distance)" class="distance">{{ formatDistance(station.distance) }}</span>
+      <span v-if="distanceText" class="sep">·</span>
+      <span v-if="distanceText" class="distance">{{ distanceText }}</span>
     </div>
   </article>
 </template>
@@ -31,10 +31,20 @@ const props = defineProps<{
 defineEmits<{ (e: 'select', station: GasStation): void }>()
 
 const auth = useAuthStore()
-const fuelType = computed(() => auth.profile.value.fuelType ?? 'GASOLINE')
-const fuelLabel = computed(() => fuelType.value === 'DIESEL' ? '경유' : '휘발유')
+const preferredFuelType = computed(() => auth.profile.value.fuelType ?? 'GASOLINE')
+
+const effectiveFuelType = computed(() => {
+  const pref = preferredFuelType.value
+  const prefPrice = pref === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
+  if (prefPrice > 0) return pref
+  const other = pref === 'DIESEL' ? 'GASOLINE' : 'DIESEL'
+  const otherPrice = other === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
+  return otherPrice > 0 ? other : pref
+})
+
+const fuelLabel = computed(() => effectiveFuelType.value === 'DIESEL' ? '경유' : '휘발유')
 const displayPrice = computed(() =>
-  fuelType.value === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
+  effectiveFuelType.value === 'DIESEL' ? props.station.dieselPrice : props.station.gasolinePrice
 )
 
 const RANK_COLORS = ['#2563eb', '#ea580c', '#16a34a']
@@ -65,6 +75,15 @@ function formatDistance(distance?: number) {
   if (distance < 1) return `${Math.round(distance * 1000)}m`
   return `${distance.toFixed(1)}km`
 }
+
+const distanceText = computed(() => {
+  const base = formatDistance(props.station.distance)
+  if (!base || props.mode !== 'route') return base
+  const sec = props.station.durationSeconds
+  if (!sec) return base
+  const min = Math.round(sec / 60)
+  return `${base} (${min}분)`
+})
 </script>
 
 <style scoped>

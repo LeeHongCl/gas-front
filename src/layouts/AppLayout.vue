@@ -14,12 +14,16 @@ import BottomTabBar from '@/components/BottomTabBar.vue'
 
 <style scoped>
 .app-layout {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: #f9fafb;
 }
 
 .app-main {
-  min-height: 100dvh;
+  height: 100%;
   padding-bottom: 78px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 </style>

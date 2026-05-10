@@ -12,6 +12,7 @@ export interface GasStation {
   hasCarWash: boolean
   hasStore: boolean
   distance?: number
+  durationSeconds?: number
   favorite?: boolean
 }
 

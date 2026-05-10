@@ -92,12 +92,12 @@ onMounted(() => {
 
 <style scoped>
 .page {
-  min-height: 100dvh;
+  height: 100%;
 }
 
 .map-area {
   position: relative;
-  height: calc(100dvh - 78px);
+  height: 100%;
   overflow: hidden;
 }
 

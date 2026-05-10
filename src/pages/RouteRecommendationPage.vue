@@ -254,11 +254,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.page { min-height: 100dvh; }
+.page { height: 100%; }
 
 .map-area {
   position: relative;
-  height: calc(100dvh - 78px);
+  height: 100%;
   overflow: hidden;
 }
 
