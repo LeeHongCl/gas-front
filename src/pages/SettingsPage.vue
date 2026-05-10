@@ -110,7 +110,7 @@ function handleLogout() {
 
 <style scoped>
 .settings-page {
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  padding-bottom: 0;
 }
 
 .page-header {

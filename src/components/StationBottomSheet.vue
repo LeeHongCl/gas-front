@@ -27,8 +27,12 @@
       <div v-if="stations.length === 0" class="empty-hint">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#d1d5db" stroke-width="2"/>
+          <circle cx="12" cy="9" r="2.5" stroke="#d1d5db" stroke-width="2"/>
         </svg>
-        <span>검색 결과가 없습니다</span>
+        <div>
+          <p class="empty-hint-title">주변에 주유소가 없습니다</p>
+          <p class="empty-hint-sub">검색 반경을 늘리거나 새로고침해 주세요</p>
+        </div>
       </div>
       <StationCard
         v-for="(station, index) in stations"
@@ -210,10 +214,21 @@ defineExpose({ sheetHeight })
 .empty-hint {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 24px;
+  gap: 12px;
+  padding: 20px 8px;
   color: var(--color-gray-400);
+}
+
+.empty-hint-title {
+  margin: 0 0 3px;
   font-size: 14px;
+  font-weight: 700;
+  color: var(--color-gray-600);
+}
+
+.empty-hint-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-gray-400);
 }
 </style>

@@ -53,23 +53,8 @@
         </div>
       </Transition>
 
-      <!-- 빈 상태 -->
-      <Transition name="fade">
-        <div v-if="!store.loading && !store.error && store.stations.length === 0" class="empty-card">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#9ca3af" stroke-width="2"/>
-            <circle cx="12" cy="9" r="2.5" stroke="#9ca3af" stroke-width="2"/>
-          </svg>
-          <div>
-            <p class="empty-title">주변에 주유소가 없습니다</p>
-            <p class="empty-sub">검색 반경을 늘리거나 다른 위치에서 시도해 주세요</p>
-          </div>
-        </div>
-      </Transition>
-
-      <!-- 바텀시트 -->
+      <!-- 바텀시트 (항상 표시 - 카카오 맵 저작권 영역 커버) -->
       <StationBottomSheet
-        v-if="store.stations.length > 0 && !store.loading"
         ref="bottomSheetRef"
         :stations="store.stations"
         :expanded="false"
@@ -254,36 +239,6 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 700;
   padding: 6px 12px;
-}
-
-/* 빈 상태 카드 */
-.empty-card {
-  position: absolute;
-  bottom: 110px;
-  left: 16px;
-  right: 16px;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: var(--shadow-lg);
-}
-
-.empty-title {
-  margin: 0 0 3px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-gray-700);
-}
-
-.empty-sub {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-gray-400);
-  line-height: 1.5;
 }
 
 /* 트랜지션 */

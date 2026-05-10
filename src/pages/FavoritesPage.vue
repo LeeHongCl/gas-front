@@ -51,7 +51,7 @@ const favoriteStations = computed(() =>
 
 <style scoped>
 .favorites-page {
-  padding: calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  padding: calc(20px + env(safe-area-inset-top)) 16px 0;
 }
 
 .page-header {
