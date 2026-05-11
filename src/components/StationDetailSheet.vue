@@ -238,38 +238,40 @@ function handleTmapNavi() {
 
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
-
   const startPoint = routeStore.origin ?? routeStore.currentLocation
 
-  const appKey = import.meta.env.VITE_TMAP_APP_KEY
-  let tmapUrl: string
-  if (props.mode === 'route' && destination) {
-    const params: string[] = [
-      `goalX=${destination.lng}&goalY=${destination.lat}`,
-      `&goalName=${encodeURIComponent(destination.name)}`,
-      `&via1X=${lng}&via1Y=${lat}`,
-      `&via1Name=${encodeURIComponent(name)}`,
-      `&appKey=${appKey}`,
-    ]
-    if (startPoint) params.unshift(`startX=${startPoint.lng}&startY=${startPoint.lat}&`)
-    tmapUrl = `tmap://route?${params.join('')}`
-  } else {
-    const params: string[] = [
-      `goalX=${lng}&goalY=${lat}`,
-      `&goalName=${encodeURIComponent(name)}`,
-      `&appKey=${appKey}`,
-    ]
-    if (startPoint) params.unshift(`startX=${startPoint.lng}&startY=${startPoint.lat}&`)
-    tmapUrl = `tmap://route?${params.join('')}`
+  const p = new URLSearchParams()
+  if (startPoint) {
+    p.set('startX', String(startPoint.lng))
+    p.set('startY', String(startPoint.lat))
+    p.set('startName', '출발지')
   }
 
-  window.location.href = tmapUrl
+  if (props.mode === 'route' && destination) {
+    p.set('goalX', String(destination.lng))
+    p.set('goalY', String(destination.lat))
+    p.set('goalName', destination.name)
+    p.set('via1X', String(lng))
+    p.set('via1Y', String(lat))
+    p.set('via1Name', name)
+  } else {
+    p.set('goalX', String(lng))
+    p.set('goalY', String(lat))
+    p.set('goalName', name)
+  }
 
-  // T-map 미설치 시 App Store로 이동
+  const tmapUrl = `tmap://route?${p.toString()}`
+
+  const a = document.createElement('a')
+  a.href = tmapUrl
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+
   if (isIOS) {
     setTimeout(() => {
-      window.location.href = 'https://apps.apple.com/kr/app/t-map/id431589174'
-    }, 1500)
+      window.open('https://apps.apple.com/kr/app/t-map/id431589174', '_blank')
+    }, 2000)
   }
 }
 
