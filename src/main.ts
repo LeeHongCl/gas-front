@@ -8,7 +8,7 @@ import './assets/styles.css'
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: false })
-  StatusBar.setStyle({ style: Style.Light })
+  StatusBar.setStyle({ style: Style.Default })
 }
 
 const app = createApp(App)
