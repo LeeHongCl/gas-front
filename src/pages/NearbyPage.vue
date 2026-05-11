@@ -109,7 +109,7 @@ onMounted(() => {
 /* 상단 플로팅 바 */
 .top-bar {
   position: absolute;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top));
   left: 16px;
   right: 16px;
   z-index: 30;

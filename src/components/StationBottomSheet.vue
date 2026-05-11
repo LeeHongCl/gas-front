@@ -58,9 +58,10 @@ const props = defineProps<{
   snapHeight?: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggle-expand'): void
   (e: 'select-station', station: GasStation): void
+  (e: 'height-change', height: number): void
 }>()
 
 const sheetRef = ref<HTMLElement | null>(null)
@@ -82,6 +83,8 @@ onMounted(() => {
 watch(() => props.snapHeight, (h) => {
   if (h != null) sheetHeight.value = h
 })
+
+watch(sheetHeight, (h) => emit('height-change', h))
 
 function startDrag(e: MouseEvent | TouchEvent) {
   isDragging.value = true

@@ -30,7 +30,7 @@
       </Transition>
 
       <!-- 플로팅 버튼 -->
-      <FloatingButtons @recenter="handleRecenter" @research="handleResearch" />
+      <FloatingButtons :sheet-height="fabSheetHeight" @recenter="handleRecenter" @research="handleResearch" />
 
       <!-- 바텀시트 -->
       <StationBottomSheet
@@ -38,6 +38,7 @@
         :expanded="sheetExpanded"
         @toggle-expand="sheetExpanded = !sheetExpanded"
         @select-station="handleSelectStation"
+        @height-change="fabSheetHeight = $event"
       />
     </div>
 
@@ -83,6 +84,7 @@ useNoBodyScroll()
 const keyword = ref('')
 const isFilterOpen = ref(false)
 const sheetExpanded = ref(true)
+const fabSheetHeight = ref(window.innerHeight * 0.30)
 const selectedStation = ref<GasStation | null>(null)
 
 // 반경 기반 경로 상태

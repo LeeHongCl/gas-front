@@ -242,8 +242,15 @@ let watchId: number | null = null
 
 onMounted(() => {
   if (!navigator.geolocation) return
+  let centered = false
   watchId = navigator.geolocation.watchPosition(
-    (pos) => routeStore.updateCurrentLocation(pos.coords.latitude, pos.coords.longitude),
+    (pos) => {
+      routeStore.updateCurrentLocation(pos.coords.latitude, pos.coords.longitude)
+      if (!centered && !routeStore.origin) {
+        routeStore.mapCenter = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        centered = true
+      }
+    },
     (err) => console.error(err),
   )
 })
@@ -266,7 +273,7 @@ onUnmounted(() => {
 
 .top-panel {
   position: absolute;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top));
   left: 16px;
   right: 16px;
   z-index: 30;
@@ -274,7 +281,7 @@ onUnmounted(() => {
 
 .nav-top-card {
   position: absolute;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top));
   left: 16px;
   right: 16px;
   z-index: 40;
@@ -364,7 +371,7 @@ onUnmounted(() => {
 
 .error-toast {
   position: absolute;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top));
   left: 16px;
   right: 16px;
   z-index: 35;

@@ -1,5 +1,5 @@
 <template>
-  <div class="fab-group">
+  <div class="fab-group" :style="{ bottom: bottomPx }">
     <button class="fab" aria-label="현재 위치로 이동" @click="$emit('recenter')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="3" fill="currentColor"/>
@@ -18,22 +18,30 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps<{
+  sheetHeight?: number
+}>()
+
 defineEmits<{
   (e: 'recenter'): void
   (e: 'research'): void
 }>()
+
+const bottomPx = computed(() => `${(props.sheetHeight ?? 240) + 16}px`)
 </script>
 
 <style scoped>
 .fab-group {
   position: absolute;
   right: 16px;
-  bottom: 240px;
   z-index: 35;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  transition: bottom 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .fab {
