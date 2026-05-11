@@ -330,7 +330,7 @@ onUnmounted(() => {
 
 .nav-bottom-panel {
   position: absolute;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
   left: 16px;
   right: 16px;
   z-index: 40;

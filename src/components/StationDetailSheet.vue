@@ -121,7 +121,7 @@
                 <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="white" stroke-width="2" stroke-linejoin="round" fill="none"/>
               </svg>
             </span>
-            <span class="navi-icon-label">{{ isIOS ? 'Apple Maps' : 'T map' }}</span>
+            <span class="navi-icon-label">T map</span>
           </button>
         </div>
 
@@ -241,22 +241,6 @@ function handleTmapNavi() {
 
   const startPoint = routeStore.origin ?? routeStore.currentLocation
 
-  // iOS: tmap:// URL 스킴 미지원 → Apple Maps로 폴백
-  if (isIOS) {
-    let appleUrl: string
-    if (props.mode === 'route' && destination) {
-      const saddr = startPoint ? `${startPoint.lat},${startPoint.lng}` : ''
-      appleUrl = `https://maps.apple.com/?${saddr ? `saddr=${saddr}&` : ''}daddr=${destination.lat},${destination.lng}&dirflg=d`
-    } else {
-      const saddr = startPoint ? `${startPoint.lat},${startPoint.lng}` : ''
-      appleUrl = `https://maps.apple.com/?${saddr ? `saddr=${saddr}&` : ''}daddr=${lat},${lng}&dirflg=d`
-    }
-    console.log('[Apple Maps URL]', appleUrl)
-    window.open(appleUrl, '_blank')
-    return
-  }
-
-  // Android: tmap:// URL 스킴 사용
   const appKey = import.meta.env.VITE_TMAP_APP_KEY
   let tmapUrl: string
   if (props.mode === 'route' && destination) {
@@ -279,10 +263,14 @@ function handleTmapNavi() {
     tmapUrl = `tmap://route?${params.join('')}`
   }
 
-  console.log('[TMap URL]', tmapUrl)
-  const a = document.createElement('a')
-  a.href = tmapUrl
-  a.click()
+  window.location.href = tmapUrl
+
+  // T-map 미설치 시 App Store로 이동
+  if (isIOS) {
+    setTimeout(() => {
+      window.location.href = 'https://apps.apple.com/kr/app/t-map/id431589174'
+    }, 1500)
+  }
 }
 
 function handleNaverMap() {
