@@ -359,7 +359,7 @@ function formatDistance(distance?: number) {
 
 .detail-sheet {
   width: 100%;
-  padding: 0 20px calc(28px + env(safe-area-inset-bottom));
+  padding: 0 20px calc(80px + env(safe-area-inset-bottom));
   border-top-left-radius: var(--radius-2xl);
   border-top-right-radius: var(--radius-2xl);
   background: white;
