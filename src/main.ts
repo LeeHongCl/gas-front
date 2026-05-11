@@ -1,8 +1,15 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { Capacitor } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
 import App from './App.vue'
 import router from './router'
 import './assets/styles.css'
+
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setOverlaysWebView({ overlay: false })
+  StatusBar.setStyle({ style: Style.Light })
+}
 
 const app = createApp(App)
 const pinia = createPinia()

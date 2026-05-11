@@ -68,7 +68,7 @@ import { RouterLink } from 'vue-router'
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+  padding: calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
   background: linear-gradient(160deg, #dbeafe 0%, #eff6ff 40%, #f8fbff 100%);
   overflow: hidden;
 }
