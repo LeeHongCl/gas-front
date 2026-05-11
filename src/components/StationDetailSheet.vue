@@ -240,33 +240,23 @@ function handleTmapNavi() {
   const destination = props.mode === 'route' ? routeStore.destination : null
   const startPoint = routeStore.origin ?? routeStore.currentLocation
 
-  const p = new URLSearchParams()
+  const enc = encodeURIComponent
+  let query = ''
+
   if (startPoint) {
-    p.set('startX', String(startPoint.lng))
-    p.set('startY', String(startPoint.lat))
-    p.set('startName', '출발지')
+    query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
   }
 
   if (props.mode === 'route' && destination) {
-    p.set('goalX', String(destination.lng))
-    p.set('goalY', String(destination.lat))
-    p.set('goalName', destination.name)
-    p.set('via1X', String(lng))
-    p.set('via1Y', String(lat))
-    p.set('via1Name', name)
+    query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
+    query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
   } else {
-    p.set('goalX', String(lng))
-    p.set('goalY', String(lat))
-    p.set('goalName', name)
+    query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
 
-  const tmapUrl = `tmap://route?${p.toString()}`
+  const tmapUrl = `tmap://route?${query}`
 
-  const a = document.createElement('a')
-  a.href = tmapUrl
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  window.location.href = tmapUrl
 
   if (isIOS) {
     setTimeout(() => {
