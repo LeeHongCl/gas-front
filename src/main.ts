@@ -7,8 +7,8 @@ import router from './router'
 import './assets/styles.css'
 
 if (Capacitor.isNativePlatform()) {
-  StatusBar.setOverlaysWebView({ overlay: false })
-  StatusBar.setStyle({ style: Style.Default })
+  StatusBar.setOverlaysWebView({ overlay: true })
+  StatusBar.setStyle({ style: Style.Dark })
 }
 
 const app = createApp(App)
