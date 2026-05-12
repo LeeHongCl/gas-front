@@ -234,6 +234,7 @@ function handleKakaoNavi() {
 }
 
 async function handleTmapNavi() {
+  alert('T-map 클릭됨')
   if (!props.station || !isMobile) return
 
   const { name, lat, lng } = props.station
