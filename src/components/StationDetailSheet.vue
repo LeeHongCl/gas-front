@@ -241,22 +241,16 @@ async function handleTmapNavi() {
   const destination = props.mode === 'route' ? routeStore.destination : null
 
   if (isIOS) {
-    // iOS: Capacitor 네이티브 T-map SDK 사용 (경유지 포함)
-    if (props.mode === 'route' && destination) {
-      await startTmapNavi({
-        destLat: destination.lat,
-        destLng: destination.lng,
-        destName: destination.name,
-        viaLat: lat,
-        viaLng: lng,
-        viaName: name,
-      })
-    } else {
-      await startTmapNavi({
-        destLat: lat,
-        destLng: lng,
-        destName: name,
-      })
+    try {
+      alert(`startTmapNavi 호출: mode=${props.mode} dest=${destination?.name}`)
+      const r = await startTmapNavi(
+        props.mode === 'route' && destination
+          ? { destLat: destination.lat, destLng: destination.lng, destName: destination.name, viaLat: lat, viaLng: lng, viaName: name }
+          : { destLat: lat, destLng: lng, destName: name }
+      )
+      alert(`결과: ${r}`)
+    } catch(e) {
+      alert(`에러: ${e}`)
     }
     return
   }
