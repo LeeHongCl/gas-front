@@ -145,6 +145,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Capacitor } from '@capacitor/core'
 import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
 import { useAuthStore } from '@/stores/auth'
@@ -195,8 +196,8 @@ const BRAND_COLORS: Record<string, { bg: string; color: string }> = {
   알뜰: { bg: '#f0fdf4', color: '#16a34a' },
 }
 
-const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || Capacitor.isNativePlatform()
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios')
 
 const brandStyle = computed(() => {
   if (!props.station) return { background: '#f3f4f6', color: '#6b7280' }
