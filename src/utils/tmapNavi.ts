@@ -21,12 +21,7 @@ export async function startTmapNavi(options: {
   viaLng?: number
   viaName?: string
 }): Promise<boolean> {
-  if (!Capacitor.isNativePlatform()) return false
-  try {
-    await TmapNavi.startNavigation(options)
-    return true
-  } catch (e) {
-    console.error('[TmapNavi]', e)
-    return false
-  }
+  if (!Capacitor.isNativePlatform()) throw new Error(`not native: ${Capacitor.getPlatform()}`)
+  await TmapNavi.startNavigation(options)
+  return true
 }
