@@ -234,7 +234,6 @@ function handleKakaoNavi() {
 }
 
 async function handleTmapNavi() {
-  alert(`mobile:${isMobile} ios:${isIOS} native:${Capacitor.isNativePlatform()} platform:${Capacitor.getPlatform()}`)
   if (!props.station || !isMobile) return
 
   const { name, lat, lng } = props.station
@@ -242,15 +241,13 @@ async function handleTmapNavi() {
 
   if (isIOS) {
     try {
-      alert(`startTmapNavi 호출: mode=${props.mode} dest=${destination?.name}`)
-      const r = await startTmapNavi(
+      await startTmapNavi(
         props.mode === 'route' && destination
           ? { destLat: destination.lat, destLng: destination.lng, destName: destination.name, viaLat: lat, viaLng: lng, viaName: name }
           : { destLat: lat, destLng: lng, destName: name }
       )
-      alert(`결과: ${r}`)
     } catch(e) {
-      alert(`에러: ${e}`)
+      alert(`T map 오류: ${e}`)
     }
     return
   }
