@@ -149,6 +149,7 @@ import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
 import { useAuthStore } from '@/stores/auth'
 import RoutePreviewModal from '@/components/RoutePreviewModal.vue'
+import { startTmapNavi } from '@/utils/tmapNavi'
 
 const routeStore = useRouteStore()
 const auth = useAuthStore()
@@ -233,40 +234,45 @@ function handleKakaoNavi() {
   }
 }
 
-function handleTmapNavi() {
+async function handleTmapNavi() {
   if (!props.station || !isMobile) return
 
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
-  const enc = encodeURIComponent
-
-  let tmapUrl: string
 
   if (isIOS) {
-    // iOS T-map URL scheme: rGoX/rGoY/rGoName (경유지 미지원, GPS 자동 출발)
-    const goal = (props.mode === 'route' && destination) ? destination : { lat, lng, name }
-    tmapUrl = `tmap://route?rGoX=${goal.lng}&rGoY=${goal.lat}&rGoName=${enc(goal.name)}`
-  } else {
-    // Android T-map URL scheme
-    const startPoint = routeStore.origin ?? routeStore.currentLocation
-    let query = ''
-    if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
+    // iOS: Capacitor 네이티브 T-map SDK 사용 (경유지 포함)
     if (props.mode === 'route' && destination) {
-      query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
-      query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+      await startTmapNavi({
+        destLat: destination.lat,
+        destLng: destination.lng,
+        destName: destination.name,
+        viaLat: lat,
+        viaLng: lng,
+        viaName: name,
+      })
     } else {
-      query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
+      await startTmapNavi({
+        destLat: lat,
+        destLng: lng,
+        destName: name,
+      })
     }
-    tmapUrl = `tmap://route?${query}`
+    return
   }
 
-  window.location.href = tmapUrl
-
-  if (isIOS) {
-    setTimeout(() => {
-      window.open('https://apps.apple.com/kr/app/t-map/id431589174', '_blank')
-    }, 2000)
+  // Android: URL scheme
+  const enc = encodeURIComponent
+  const startPoint = routeStore.origin ?? routeStore.currentLocation
+  let query = ''
+  if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
+  if (props.mode === 'route' && destination) {
+    query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
+    query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+  } else {
+    query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
+  window.location.href = `tmap://route?${query}`
 }
 
 function handleNaverMap() {
