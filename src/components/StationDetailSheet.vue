@@ -234,7 +234,7 @@ function handleKakaoNavi() {
 }
 
 async function handleTmapNavi() {
-  alert('T-map 클릭됨')
+  alert(`mobile:${isMobile} ios:${isIOS} native:${Capacitor.isNativePlatform()} platform:${Capacitor.getPlatform()}`)
   if (!props.station || !isMobile) return
 
   const { name, lat, lng } = props.station
