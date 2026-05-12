@@ -238,23 +238,27 @@ function handleTmapNavi() {
 
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
-  const startPoint = routeStore.origin ?? routeStore.currentLocation
-
   const enc = encodeURIComponent
-  let query = ''
 
-  if (startPoint) {
-    query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
-  }
+  let tmapUrl: string
 
-  if (props.mode === 'route' && destination) {
-    query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
-    query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+  if (isIOS) {
+    // iOS T-map URL scheme: rGoX/rGoY/rGoName (경유지 미지원, GPS 자동 출발)
+    const goal = (props.mode === 'route' && destination) ? destination : { lat, lng, name }
+    tmapUrl = `tmap://route?rGoX=${goal.lng}&rGoY=${goal.lat}&rGoName=${enc(goal.name)}`
   } else {
-    query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
+    // Android T-map URL scheme
+    const startPoint = routeStore.origin ?? routeStore.currentLocation
+    let query = ''
+    if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
+    if (props.mode === 'route' && destination) {
+      query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
+      query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+    } else {
+      query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
+    }
+    tmapUrl = `tmap://route?${query}`
   }
-
-  const tmapUrl = `tmap://route?${query}`
 
   window.location.href = tmapUrl
 
