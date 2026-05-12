@@ -112,8 +112,6 @@
           <button
             type="button"
             class="navi-icon-btn"
-            :class="{ disabled: !isMobile }"
-            :disabled="!isMobile"
             @click.stop.prevent="handleTmapNavi"
           >
             <span class="navi-icon-wrap tmap-wrap">
