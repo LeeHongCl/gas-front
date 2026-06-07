@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import SplashPage from '@/pages/SplashPage.vue'
-import LoginPage from '@/pages/LoginPage.vue'
-import SignUpPage from '@/pages/SignUpPage.vue'
 import InitialProfilePage from '@/pages/InitialProfilePage.vue'
+import OAuthCallbackPage from '@/pages/OAuthCallbackPage.vue'
 import HomePage from '@/pages/HomePage.vue'
 import NearbyPage from '@/pages/NearbyPage.vue'
 import FavoritesPage from '@/pages/FavoritesPage.vue'
@@ -17,8 +16,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/welcome' },
     { path: '/welcome', name: 'welcome', component: SplashPage },
-    { path: '/login', name: 'login', component: LoginPage },
-    { path: '/signup', name: 'signup', component: SignUpPage },
+    { path: '/oauth/callback', name: 'oauth-callback', component: OAuthCallbackPage },
     {
       path: '/initial-profile',
       name: 'initial-profile',
@@ -52,7 +50,7 @@ router.beforeEach((to) => {
   const profileDone = auth.hasCompletedInitialProfile.value
 
   const needsAuth = to.matched.some((record) => record.meta.requiresAuth)
-  const isAuthPage = ['/welcome', '/login', '/signup'].includes(to.path)
+  const isAuthPage = ['/welcome', '/oauth/callback'].includes(to.path)
   const isInitialProfilePage = to.path === '/initial-profile'
 
   if (needsAuth && !loggedIn) return '/welcome'

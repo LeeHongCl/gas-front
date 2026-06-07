@@ -26,6 +26,22 @@ export default defineConfig({
         target: 'http://43.203.29.58:8080',
         changeOrigin: true,
       },
+      '/auth': {
+        target: 'http://43.203.29.58:8080',
+        changeOrigin: true,
+      },
+      '/users': {
+        target: 'http://43.203.29.58:8080',
+        changeOrigin: true,
+      },
+      '/oauth2': {
+        target: 'http://43.203.29.58:8080',
+        changeOrigin: true,
+      },
+      '/login/oauth2': {
+        target: 'http://43.203.29.58:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

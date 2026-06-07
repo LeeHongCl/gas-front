@@ -50,15 +50,23 @@
       </div>
 
       <div class="action-group">
-        <RouterLink to="/login" class="primary-btn">시작하기</RouterLink>
-        <RouterLink to="/signup" class="secondary-btn">회원가입</RouterLink>
+        <button class="kakao-btn" @click="loginWithKakao">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3C6.477 3 2 6.582 2 11c0 2.796 1.676 5.26 4.23 6.792L5.2 21l4.077-2.168A11.97 11.97 0 0012 19c5.523 0 10-3.582 10-8s-4.477-8-10-8z" fill="#3C1E1E"/>
+          </svg>
+          카카오로 로그인
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+const KAKAO_OAUTH_URL = `${import.meta.env.VITE_BACKEND_URL ?? 'http://43.203.29.58:8080'}/oauth2/authorization/kakao`
+
+function loginWithKakao() {
+  window.location.href = KAKAO_OAUTH_URL
+}
 </script>
 
 <style scoped>
@@ -186,11 +194,13 @@ import { RouterLink } from 'vue-router'
   gap: 12px;
 }
 
+.kakao-btn,
 .primary-btn,
 .secondary-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 56px;
   border-radius: var(--radius-lg);
   font-size: 16px;
@@ -198,10 +208,18 @@ import { RouterLink } from 'vue-router'
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
+.kakao-btn:active,
 .primary-btn:active,
 .secondary-btn:active {
   transform: scale(0.98);
   opacity: 0.9;
+}
+
+.kakao-btn {
+  background: #FEE500;
+  color: #3C1E1E;
+  border: 0;
+  box-shadow: 0 2px 8px rgba(254, 229, 0, 0.4);
 }
 
 .primary-btn {

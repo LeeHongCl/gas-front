@@ -1,16 +1,15 @@
 import { computed, ref, watch } from 'vue'
-import { mockUsers, type MockUser } from '@/mocks/mockUsers'
+import { apiGetMyProfile } from '@/api/authApi'
 
 export interface UserProfile {
   name: string
-  email: string
   carModel: string
   fuelEfficiency: string
-  fuelType: 'GASOLINE' | 'DIESEL'
+  fuelType: 'GASOLINE' | 'DIESEL' | 'PREMIUM_GASOLINE' | 'LPG'
 }
 
 const STORAGE_KEY = 'gasstation-auth'
-const USERS_STORAGE_KEY = 'gasstation-mock-users'
+const TOKEN_KEY = 'gasstation-token'
 
 interface PersistedAuthState {
   isLoggedIn: boolean
@@ -21,33 +20,10 @@ interface PersistedAuthState {
 function getDefaultProfile(): UserProfile {
   return {
     name: '',
-    email: '',
     carModel: '',
     fuelEfficiency: '',
     fuelType: 'GASOLINE',
   }
-}
-
-function loadMockUsers(): MockUser[] {
-  try {
-    const raw = localStorage.getItem(USERS_STORAGE_KEY)
-    if (!raw) {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(mockUsers))
-      return [...mockUsers]
-    }
-
-    const parsed = JSON.parse(raw) as MockUser[]
-    return Array.isArray(parsed) ? parsed : [...mockUsers]
-  } catch (error) {
-    console.error('임시 유저 데이터를 불러오지 못했습니다.', error)
-    return [...mockUsers]
-  }
-}
-
-const users = ref<MockUser[]>(loadMockUsers())
-
-function saveMockUsers() {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users.value))
 }
 
 function loadStoredAuthState(): PersistedAuthState {
@@ -71,14 +47,14 @@ function loadStoredAuthState(): PersistedAuthState {
         ...(parsed.profile ?? {}),
       },
     }
-  } catch (error) {
-    console.error('저장된 인증 정보를 불러오지 못했습니다.', error)
+  } catch {
     return fallback
   }
 }
 
 const initialState = loadStoredAuthState()
 
+const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
 const isLoggedIn = ref(initialState.isLoggedIn)
 const hasCompletedInitialProfile = ref(initialState.hasCompletedInitialProfile)
 const profile = ref<UserProfile>(initialState.profile)
@@ -91,72 +67,54 @@ watch(
       hasCompletedInitialProfile: hasCompletedInitialProfile.value,
       profile: profile.value,
     }
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState))
   },
   { deep: true },
 )
 
-function login(email: string, password: string) {
-  const foundUser = users.value.find(
-    (user) => user.email === email && user.password === password,
-  )
+function setToken(t: string) {
+  token.value = t
+  localStorage.setItem(TOKEN_KEY, t)
+}
 
-  if (!foundUser) {
-    throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
+function clearToken() {
+  token.value = null
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+async function loginWithOAuth(idToken: string) {
+  setToken(idToken)
+
+  try {
+    const data = await apiGetMyProfile(idToken)
+    profile.value = {
+      name: data.name ?? '',
+      carModel: data.carModel ?? '',
+      fuelEfficiency: data.fuelEfficiency != null ? String(data.fuelEfficiency) : '',
+      fuelType: data.fuelType ?? 'GASOLINE',
+    }
+    hasCompletedInitialProfile.value = !!data.carModel && data.fuelEfficiency != null
+  } catch {
+    profile.value = { ...getDefaultProfile() }
+    hasCompletedInitialProfile.value = false
   }
 
   isLoggedIn.value = true
-  hasCompletedInitialProfile.value = foundUser.hasCompletedInitialProfile
-  profile.value = {
-    name: foundUser.name,
-    email: foundUser.email,
-    carModel: foundUser.carModel,
-    fuelEfficiency: foundUser.fuelEfficiency,
-    fuelType: foundUser.fuelType ?? 'GASOLINE',
-  }
 }
 
 function logout() {
   isLoggedIn.value = false
   hasCompletedInitialProfile.value = false
   profile.value = getDefaultProfile()
+  clearToken()
   localStorage.removeItem(STORAGE_KEY)
 }
 
-function signUp(payload: { name: string; email: string; password: string }) {
-  const exists = users.value.some((user) => user.email === payload.email)
-
-  if (exists) {
-    throw new Error('이미 존재하는 이메일입니다.')
-  }
-
-  const newUser: MockUser = {
-    id: `u${Date.now()}`,
-    name: payload.name,
-    email: payload.email,
-    password: payload.password,
-    carModel: '',
-    fuelEfficiency: '',
-    fuelType: 'GASOLINE',
-    hasCompletedInitialProfile: false,
-  }
-
-  users.value.push(newUser)
-  saveMockUsers()
-
-  isLoggedIn.value = true
-  hasCompletedInitialProfile.value = false
-  profile.value = {
-    name: newUser.name,
-    email: newUser.email,
-    carModel: '',
-    fuelEfficiency: '',
-    fuelType: 'GASOLINE',
-  }
-}
-
-function completeInitialProfile(payload: { carModel: string; fuelEfficiency: string; fuelType: 'GASOLINE' | 'DIESEL' }) {
+function completeInitialProfile(payload: {
+  carModel: string
+  fuelEfficiency: string
+  fuelType: 'GASOLINE' | 'DIESEL' | 'PREMIUM_GASOLINE' | 'LPG'
+}) {
   hasCompletedInitialProfile.value = true
   profile.value = {
     ...profile.value,
@@ -164,25 +122,10 @@ function completeInitialProfile(payload: { carModel: string; fuelEfficiency: str
     fuelEfficiency: payload.fuelEfficiency,
     fuelType: payload.fuelType,
   }
-
-  const foundUser = users.value.find((user) => user.email === profile.value.email)
-  if (foundUser) {
-    foundUser.carModel = payload.carModel
-    foundUser.fuelEfficiency = payload.fuelEfficiency
-    foundUser.fuelType = payload.fuelType
-    foundUser.hasCompletedInitialProfile = true
-    saveMockUsers()
-  }
 }
 
 function skipInitialProfile() {
   hasCompletedInitialProfile.value = true
-
-  const foundUser = users.value.find((user) => user.email === profile.value.email)
-  if (foundUser) {
-    foundUser.hasCompletedInitialProfile = true
-    saveMockUsers()
-  }
 }
 
 function updateProfile(payload: Partial<UserProfile>) {
@@ -190,21 +133,6 @@ function updateProfile(payload: Partial<UserProfile>) {
     ...profile.value,
     ...payload,
   }
-
-  const foundUser = users.value.find((user) => user.email === profile.value.email)
-  if (foundUser) {
-    foundUser.name = profile.value.name
-    foundUser.carModel = profile.value.carModel
-    foundUser.fuelEfficiency = profile.value.fuelEfficiency
-    foundUser.fuelType = profile.value.fuelType
-    saveMockUsers()
-  }
-}
-
-function resetMockUsers() {
-  users.value = [...mockUsers]
-  saveMockUsers()
-  logout()
 }
 
 export function useAuthStore() {
@@ -213,17 +141,15 @@ export function useAuthStore() {
   )
 
   return {
+    token,
     isLoggedIn,
     hasCompletedInitialProfile,
     isInitialMember,
     profile,
-    users,
-    login,
+    loginWithOAuth,
     logout,
-    signUp,
     completeInitialProfile,
     skipInitialProfile,
     updateProfile,
-    resetMockUsers,
   }
 }
