@@ -71,9 +71,7 @@
         <!-- 내비/전화 아이콘 버튼 그리드 -->
         <div class="navi-grid">
           <a
-            class="navi-icon-btn"
-            :class="{ disabled: !station.tel }"
-            :href="station.tel ? `tel:${station.tel}` : undefined"
+            class="navi-icon-btn disabled"
             @click.stop
           >
             <span class="navi-icon-wrap phone-wrap">
@@ -84,7 +82,7 @@
             <span class="navi-icon-label">전화</span>
           </a>
 
-          <button type="button" class="navi-icon-btn" @click.stop.prevent="handleKakaoNavi">
+          <button type="button" class="navi-icon-btn disabled" disabled @click.stop.prevent>
             <span class="navi-icon-wrap kakao-wrap">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                 <polygon points="3,11 22,2 13,21 11,13 3,11" stroke="#3C1E1E" stroke-width="2" stroke-linejoin="round" fill="none"/>
@@ -111,8 +109,9 @@
 
           <button
             type="button"
-            class="navi-icon-btn"
-            @click.stop.prevent="handleTmapNavi"
+            class="navi-icon-btn disabled"
+            disabled
+            @click.stop.prevent
           >
             <span class="navi-icon-wrap tmap-wrap">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
