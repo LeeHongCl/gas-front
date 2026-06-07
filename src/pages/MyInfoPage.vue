@@ -10,7 +10,7 @@
       </div>
       <div class="profile-info">
         <p class="profile-name">{{ auth.profile.value.name || '사용자' }}</p>
-        <p class="profile-email">{{ auth.profile.value.email || '' }}</p>
+        <p class="profile-email">{{ auth.profile.value.name ? '카카오 계정' : '' }}</p>
       </div>
     </div>
 
@@ -128,7 +128,7 @@ const router = useRouter()
 
 const carModel = ref('')
 const fuelEfficiency = ref('')
-const fuelType = ref<'GASOLINE' | 'DIESEL'>('GASOLINE')
+const fuelType = ref<'GASOLINE' | 'DIESEL' | 'PREMIUM_GASOLINE' | 'LPG'>('GASOLINE')
 const savedMessage = ref('')
 const carFocused = ref(false)
 const effFocused = ref(false)
