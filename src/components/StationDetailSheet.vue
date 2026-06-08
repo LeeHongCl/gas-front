@@ -148,7 +148,6 @@ import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
 import { useAuthStore } from '@/stores/auth'
 import RoutePreviewModal from '@/components/RoutePreviewModal.vue'
-import { startTmapNavi } from '@/utils/tmapNavi'
 
 const routeStore = useRouteStore()
 const auth = useAuthStore()
@@ -233,35 +232,13 @@ function handleKakaoNavi() {
   }
 }
 
-async function handleTmapNavi() {
+function handleTmapNavi() {
   if (!props.station || !isMobile) return
 
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
   const startPoint = routeStore.origin ?? (routeStore.currentLocation ? { ...routeStore.currentLocation, name: '출발지' } : null)
 
-  if (isIOS && Capacitor.isNativePlatform()) {
-    try {
-      if (props.mode === 'route' && destination) {
-        await startTmapNavi({
-          ...(startPoint ? { startLat: startPoint.lat, startLng: startPoint.lng, startName: startPoint.name } : {}),
-          destLat: destination.lat,
-          destLng: destination.lng,
-          destName: destination.name,
-          viaLat: lat,
-          viaLng: lng,
-          viaName: name,
-        })
-      } else {
-        await startTmapNavi({ destLat: lat, destLng: lng, destName: name })
-      }
-    } catch(e) {
-      alert(`T map 오류: ${e}`)
-    }
-    return
-  }
-
-  // Android (native/web) + iOS 웹: tmap:// URL 스킴
   const enc = encodeURIComponent
   let query = ''
   if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
@@ -271,7 +248,14 @@ async function handleTmapNavi() {
   } else {
     query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
-  window.location.href = `tmap://route?${query}`
+  const tmapUrl = `tmap://route?${query}`
+
+  // Capacitor iOS 네이티브: window.open '_system' 으로 외부 앱 URL 열기
+  if (Capacitor.isNativePlatform()) {
+    window.open(tmapUrl, '_system')
+  } else {
+    window.location.href = tmapUrl
+  }
 }
 
 function handleNaverMap() {
