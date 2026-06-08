@@ -242,15 +242,28 @@ function handleTmapNavi() {
 
   const enc = encodeURIComponent
   const appKey = import.meta.env.VITE_TMAP_APP_KEY ?? ''
-  let query = `appKey=${appKey}&`
-  if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
-  if (props.mode === 'route' && destination) {
-    query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
-    query += `&totalcount=1&count=1&lon=${lng}&lat=${lat}&name=${enc(name)}`
+  let tmapUrl: string
+
+  if (isIOS) {
+    // iOS: rGoX/rGoY/rGoName 파라미터 사용, 출발지는 URL 스킴 미지원 (GPS 자동)
+    if (props.mode === 'route' && destination) {
+      tmapUrl = `tmap://route?appKey=${appKey}&rGoX=${destination.lng}&rGoY=${destination.lat}&rGoName=${enc(destination.name)}`
+    } else {
+      tmapUrl = `tmap://route?appKey=${appKey}&rGoX=${lng}&rGoY=${lat}&rGoName=${enc(name)}`
+    }
   } else {
-    query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
+    // Android: goalx/goaly/goalname 파라미터 사용 (소문자), 출발지/경유지 지원
+    let query = `appKey=${appKey}&`
+    if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
+    if (props.mode === 'route' && destination) {
+      query += `goalx=${destination.lng}&goaly=${destination.lat}&goalname=${enc(destination.name)}`
+      query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+    } else {
+      query += `goalx=${lng}&goaly=${lat}&goalname=${enc(name)}`
+    }
+    tmapUrl = `tmap://route?${query}`
   }
-  const tmapUrl = `tmap://route?${query}`
+
   console.log('[TmapNavi] url:', tmapUrl)
   openTmapUrl(tmapUrl)
 }
