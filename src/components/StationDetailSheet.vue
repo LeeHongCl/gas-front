@@ -241,7 +241,8 @@ function handleTmapNavi() {
   const startPoint = routeStore.origin ?? (routeStore.currentLocation ? { ...routeStore.currentLocation, name: '출발지' } : null)
 
   const enc = encodeURIComponent
-  let query = ''
+  const appKey = import.meta.env.VITE_TMAP_APP_KEY ?? ''
+  let query = `appKey=${appKey}&`
   if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
   if (props.mode === 'route' && destination) {
     query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
