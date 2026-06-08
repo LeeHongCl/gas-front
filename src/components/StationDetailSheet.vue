@@ -249,7 +249,9 @@ function handleTmapNavi() {
   } else {
     query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
-  openTmapUrl(`tmap://route?${query}`)
+  const tmapUrl = `tmap://route?${query}`
+  console.log('[TmapNavi] url:', tmapUrl)
+  openTmapUrl(tmapUrl)
 }
 
 function handleNaverMap() {

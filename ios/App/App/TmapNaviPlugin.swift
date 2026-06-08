@@ -94,8 +94,10 @@ public class TmapNaviPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Invalid URL")
             return
         }
+        print("[TmapNaviPlugin] openUrl: \(urlString)")
         DispatchQueue.main.async {
             UIApplication.shared.open(url, options: [:]) { success in
+                print("[TmapNaviPlugin] openUrl result: \(success)")
                 if success {
                     call.resolve()
                 } else {
