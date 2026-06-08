@@ -246,7 +246,7 @@ function handleTmapNavi() {
   if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
   if (props.mode === 'route' && destination) {
     query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
-    query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
+    query += `&totalcount=1&count=1&lon=${lng}&lat=${lat}&name=${enc(name)}`
   } else {
     query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
