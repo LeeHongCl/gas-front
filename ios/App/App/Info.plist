@@ -49,6 +49,12 @@
 	<true/>
 	<key>TMAP_APP_KEY</key>
 	<string>iO0p9Wp4KVaqepEKDTRon6yDUAE1FAAI6aKSc1kM</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tmap</string>
+		<string>nmap</string>
+		<string>kakaomap</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>주변 주유소를 찾기 위해 현재 위치가 필요합니다.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
