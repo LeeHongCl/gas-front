@@ -236,10 +236,10 @@ async function handleTmapNavi() {
 
   const { name, lat, lng } = props.station
   const destination = props.mode === 'route' ? routeStore.destination : null
+  const startPoint = routeStore.origin ?? (routeStore.currentLocation ? { ...routeStore.currentLocation, name: '출발지' } : null)
 
-  if (isIOS) {
+  if (isIOS && Capacitor.isNativePlatform()) {
     try {
-      const startPoint = routeStore.origin ?? (routeStore.currentLocation ? { ...routeStore.currentLocation, name: '출발지' } : null)
       if (props.mode === 'route' && destination) {
         await startTmapNavi({
           ...(startPoint ? { startLat: startPoint.lat, startLng: startPoint.lng, startName: startPoint.name } : {}),
@@ -259,11 +259,10 @@ async function handleTmapNavi() {
     return
   }
 
-  // Android: URL scheme
+  // Android (native/web) + iOS 웹: tmap:// URL 스킴
   const enc = encodeURIComponent
-  const startPoint = routeStore.origin ?? routeStore.currentLocation
   let query = ''
-  if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc('출발지')}&`
+  if (startPoint) query += `startX=${startPoint.lng}&startY=${startPoint.lat}&startName=${enc(startPoint.name)}&`
   if (props.mode === 'route' && destination) {
     query += `goalX=${destination.lng}&goalY=${destination.lat}&goalName=${enc(destination.name)}`
     query += `&via1X=${lng}&via1Y=${lat}&via1Name=${enc(name)}`
