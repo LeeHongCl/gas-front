@@ -1,0 +1,101 @@
+PODS:
+  - Alamofire (5.11.2)
+  - AloeStackView (1.2.0)
+  - CocoaSecurity (1.2.4)
+  - CombineCocoa (0.4.1)
+  - CombineExt (1.8.0)
+  - FlexLayout (2.0.10)
+  - Interpolate (1.3.1)
+  - KeychainAccess (4.2.2)
+  - Kingfisher (7.6.2)
+  - MarqueeLabel (4.5.3)
+  - PinLayout (1.10.6)
+  - ReactorKit (3.2.0):
+    - RxSwift (~> 6.0)
+    - WeakMapTable (~> 1.1)
+  - RxCocoa (6.9.0):
+    - RxRelay (= 6.9.0)
+    - RxSwift (= 6.9.0)
+  - RxGesture (4.0.4):
+    - RxCocoa (~> 6.0)
+    - RxSwift (~> 6.0)
+  - RxRelay (6.9.0):
+    - RxSwift (= 6.9.0)
+  - RxSwift (6.9.0)
+  - Solar (2.1.0)
+  - SwiftReorder (7.2.0)
+  - SwiftSimplify (1.1.1)
+  - TinyConstraints (4.0.2)
+  - WeakMapTable (1.2.0)
+
+DEPENDENCIES:
+  - Alamofire
+  - AloeStackView
+  - CocoaSecurity
+  - CombineCocoa
+  - CombineExt
+  - FlexLayout
+  - Interpolate
+  - KeychainAccess
+  - Kingfisher (~> 7.6.2)
+  - MarqueeLabel
+  - PinLayout
+  - ReactorKit
+  - RxCocoa
+  - RxGesture
+  - RxSwift
+  - Solar
+  - SwiftReorder
+  - SwiftSimplify
+  - TinyConstraints
+
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - AloeStackView
+    - CocoaSecurity
+    - CombineCocoa
+    - CombineExt
+    - FlexLayout
+    - Interpolate
+    - KeychainAccess
+    - Kingfisher
+    - MarqueeLabel
+    - PinLayout
+    - ReactorKit
+    - RxCocoa
+    - RxGesture
+    - RxRelay
+    - RxSwift
+    - Solar
+    - SwiftReorder
+    - SwiftSimplify
+    - TinyConstraints
+    - WeakMapTable
+
+SPEC CHECKSUMS:
+  Alamofire: 400275dd1c6d87d95a041861d2a59da4b520a203
+  AloeStackView: 8a4ce0efa08128dd78d538372f60c76c224034bb
+  CocoaSecurity: d288a6f87e0f363823d2cb83e753814a6944f71a
+  CombineCocoa: e5210dbfb480ff251078929459ac17e750e7af1d
+  CombineExt: c4daa97ef75754d8ef319bd79edeef82652f3eea
+  FlexLayout: ea94491c923485f7f28891cb5b10245d22df380b
+  Interpolate: 490b5a7bdaeb00f86c69b61aa87cab59f6f8d703
+  KeychainAccess: c0c4f7f38f6fc7bbe58f5702e25f7bd2f65abf51
+  Kingfisher: 6c5449c6450c5239166510ba04afe374a98afc4f
+  MarqueeLabel: 0c57d4c6634e04a6d015af79f7c9a175b2309525
+  PinLayout: e2fceb4cbfdf49f3569fc242a7dfa0da4fb9aa06
+  ReactorKit: e8b11d6b9c415405f381669b095c154a05b59eca
+  RxCocoa: ac16414696ae706516be3e1ab00fcce5bdc9be8a
+  RxGesture: f3efb47ed2d26a8082f7b660d4a59970e275a7f8
+  RxRelay: 6b0c930e5cef57d5fe2032571e5e65b78e3cbdb1
+  RxSwift: 31649ace6aceeb422e16ff71c60804f9c3281ed9
+  Solar: 2dc6e7cc39186cb0c8228fa08df76fb50c7d8f24
+  SwiftReorder: d687883abf5f2327268e006b038025a6fc515e34
+  SwiftSimplify: bac27d83b8ffa827534c3fb8971e2e0ccf806c4a
+  TinyConstraints: 7b7ccc0c485bb3bb47082138ff28bc33cd49897f
+  WeakMapTable: 05c694ce8439a7a9ebabb56187287a63c57673d6
+
+PODFILE CHECKSUM: 3996b1a1288fab1d465b7b8175b38821cbbcbe15
+
+COCOAPODS: 1.16.2

@@ -43,4 +43,11 @@ playwright-report/
 package-lock.json
 
 # Capacitor native
-ios/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/build/
+ios/**/*.xcuserstate
+ios/**/DerivedData/
+ios/**/*.xcframework
+ios/**/*.framework
