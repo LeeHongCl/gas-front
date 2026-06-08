@@ -5,6 +5,9 @@ interface TmapNaviPlugin {
     destLat: number
     destLng: number
     destName: string
+    startLat?: number
+    startLng?: number
+    startName?: string
     viaLat?: number
     viaLng?: number
     viaName?: string
@@ -17,6 +20,9 @@ export async function startTmapNavi(options: {
   destLat: number
   destLng: number
   destName: string
+  startLat?: number
+  startLng?: number
+  startName?: string
   viaLat?: number
   viaLng?: number
   viaName?: string

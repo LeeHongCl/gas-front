@@ -109,9 +109,8 @@
 
           <button
             type="button"
-            class="navi-icon-btn disabled"
-            disabled
-            @click.stop.prevent
+            class="navi-icon-btn"
+            @click.stop.prevent="handleTmapNavi"
           >
             <span class="navi-icon-wrap tmap-wrap">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
@@ -240,11 +239,20 @@ async function handleTmapNavi() {
 
   if (isIOS) {
     try {
-      await startTmapNavi(
-        props.mode === 'route' && destination
-          ? { destLat: destination.lat, destLng: destination.lng, destName: destination.name, viaLat: lat, viaLng: lng, viaName: name }
-          : { destLat: lat, destLng: lng, destName: name }
-      )
+      const startPoint = routeStore.origin ?? (routeStore.currentLocation ? { ...routeStore.currentLocation, name: '출발지' } : null)
+      if (props.mode === 'route' && destination) {
+        await startTmapNavi({
+          ...(startPoint ? { startLat: startPoint.lat, startLng: startPoint.lng, startName: startPoint.name } : {}),
+          destLat: destination.lat,
+          destLng: destination.lng,
+          destName: destination.name,
+          viaLat: lat,
+          viaLng: lng,
+          viaName: name,
+        })
+      } else {
+        await startTmapNavi({ destLat: lat, destLng: lng, destName: name })
+      }
     } catch(e) {
       alert(`T map 오류: ${e}`)
     }
