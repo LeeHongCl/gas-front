@@ -60,7 +60,8 @@ public class TmapNaviPlugin: CAPPlugin, CAPBridgedPlugin {
                 case .completed:
                     self?.sdkInitComplete = true
                     self?.flushPendingCallbacks(success: true)
-                case .authError(_):
+                case .authError(let err):
+                    print("[TmapNaviPlugin] authError: \(err)")
                     self?.sdkInitStarted = false
                     self?.flushPendingCallbacks(success: false)
                 case .dismissReq, .dismissNRequestPermission(_):
