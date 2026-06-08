@@ -10,7 +10,8 @@ public class TmapNaviPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "TmapNaviPlugin"
     public let jsName = "TmapNavi"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "startNavigation", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "startNavigation", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openUrl", returnType: CAPPluginReturnPromise)
     ]
 
     private var authCancelable: Set<AnyCancellable> = []
@@ -85,6 +86,23 @@ public class TmapNaviPlugin: CAPPlugin, CAPBridgedPlugin {
         let callbacks = pendingInitCallbacks
         pendingInitCallbacks.removeAll()
         callbacks.forEach { $0(success) }
+    }
+
+    @objc func openUrl(_ call: CAPPluginCall) {
+        guard let urlString = call.getString("url"),
+              let url = URL(string: urlString) else {
+            call.reject("Invalid URL")
+            return
+        }
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    call.resolve()
+                } else {
+                    call.reject("T-map 앱을 열 수 없습니다. 설치 여부를 확인해주세요.")
+                }
+            }
+        }
     }
 
     @objc func startNavigation(_ call: CAPPluginCall) {

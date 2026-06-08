@@ -144,6 +144,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
+import { openTmapUrl } from '@/utils/tmapNavi'
 import type { GasStation } from '@/types/gasStation'
 import { useRouteStore } from '@/stores/route'
 import { useAuthStore } from '@/stores/auth'
@@ -248,14 +249,7 @@ function handleTmapNavi() {
   } else {
     query += `goalX=${lng}&goalY=${lat}&goalName=${enc(name)}`
   }
-  const tmapUrl = `tmap://route?${query}`
-
-  // Capacitor iOS 네이티브: window.open '_system' 으로 외부 앱 URL 열기
-  if (Capacitor.isNativePlatform()) {
-    window.open(tmapUrl, '_system')
-  } else {
-    window.location.href = tmapUrl
-  }
+  openTmapUrl(`tmap://route?${query}`)
 }
 
 function handleNaverMap() {
